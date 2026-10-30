@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../i18n/useI18n'
-import defaultBeratungImg from '../assets/beratung.jpg'
+import { useSiteStore } from '../../stores/siteStore'
+import SectionLabel from '../ui/SectionLabel.vue'
+import AppButton from '../ui/AppButton.vue'
+import defaultBeratungImg from '../../assets/img/beratung.jpg'
 
 const props = defineProps({
   sectionId: { type: String, default: 'beratung' },
@@ -17,9 +19,9 @@ const props = defineProps({
   cta: { type: Object, default: null },
 })
 
-const { t } = useI18n()
+const store = useSiteStore()
 
-const feature = computed(() => t.value.feature || {})
+const feature = computed(() => store.feature || {})
 const displayImageAlt = computed(() => props.imageAlt ?? feature.value.imageAlt)
 const displayTag = computed(() => props.tag ?? feature.value.tag)
 const displayLabel = computed(() => props.label ?? feature.value.label)
@@ -41,7 +43,7 @@ const displayCta = computed(() => props.cta ?? feature.value.cta)
         </div>
 
         <div class="feature-copy">
-          <p class="label label--light">{{ displayLabel }}</p>
+          <SectionLabel :text="displayLabel" variant="light" />
           <h2>
             {{ displayHeadingPrefix }}
             <em>{{ displayHeadingAccent }}</em>
@@ -60,10 +62,13 @@ const displayCta = computed(() => props.cta ?? feature.value.cta)
             </div>
           </div>
 
-          <a v-if="displayCta" class="btn btn--light" :href="displayCta.href">
-            {{ displayCta.label }}
-            <span class="arr">{{ displayCta.arrow || '↗' }}</span>
-          </a>
+          <AppButton
+            v-if="displayCta"
+            variant="light"
+            :href="displayCta.href"
+            :label="displayCta.label"
+            :arrow="displayCta.arrow || '↗'"
+          />
         </div>
       </div>
     </div>
@@ -77,7 +82,7 @@ const displayCta = computed(() => props.cta ?? feature.value.cta)
   overflow: hidden;
   border-radius: 30px;
   color: var(--cream);
-  background: var(--logo-blue, #082f77);
+  background: var(--logo-blue);
 }
 
 .feature-media {
@@ -105,7 +110,7 @@ const displayCta = computed(() => props.cta ?? feature.value.cta)
   left: 24px;
   z-index: 2;
   padding: 8px 13px;
-  border: 1px solid rgba(244, 239, 228, 0.35);
+  border: 1px solid var(--line-on-dark);
   border-radius: 999px;
   color: var(--cream);
   background: rgba(16, 32, 31, 0.38);
@@ -129,12 +134,12 @@ const displayCta = computed(() => props.cta ?? feature.value.cta)
   padding: clamp(34px, 5vw, 64px);
 }
 
-.feature-copy .label {
+.feature-copy :deep(.label) {
   margin-bottom: 20px;
 }
 
 .feature-copy h2 {
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-family: var(--display);
   font-size: clamp(2.4rem, 4.2vw, 3.9rem);
   line-height: 0.96;
@@ -153,14 +158,14 @@ html[lang='ru'] .feature-copy h2 {
 }
 
 .feature-copy h2 em {
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-weight: 700;
 }
 
 .feature-copy > p:not(.label) {
   max-width: 50ch;
   margin-top: 19px;
-  color: rgba(244, 239, 228, 0.78);
+  color: var(--text-on-dark-soft);
   font-size: 15px;
   line-height: 1.7;
 }
@@ -175,14 +180,14 @@ html[lang='ru'] .feature-copy h2 {
 .feature-list li {
   display: flex;
   gap: 11px;
-  color: rgba(244, 239, 228, 0.9);
+  color: var(--text-on-dark-soft);
   font-size: 13.5px;
 }
 
 .feature-list li::before {
   content: '✳';
   flex: none;
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -196,19 +201,19 @@ html[lang='ru'] .feature-copy h2 {
 
 .feature-meta div {
   padding-left: 13px;
-  border-left: 1px solid rgba(244, 239, 228, 0.22);
+  border-left: 1px solid var(--line-on-dark);
 }
 
 [dir='rtl'] .feature-meta div {
   padding-left: 0;
   padding-right: 13px;
   border-left: 0;
-  border-right: 1px solid rgba(244, 239, 228, 0.22);
+  border-right: 1px solid var(--line-on-dark);
 }
 
 .feature-meta span {
   display: block;
-  color: rgba(244, 239, 228, 0.65);
+  color: var(--text-on-dark-muted);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.13em;
@@ -237,13 +242,13 @@ html[lang='ar'] .feature-meta span {
 }
 
 .feature-meta a:hover {
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 
-.feature-copy .btn {
+.feature-copy :deep(.btn) {
   align-self: flex-start;
   margin-top: 30px;
 }

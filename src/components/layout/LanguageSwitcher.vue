@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../i18n/useI18n'
+import { useI18n } from '../../i18n/useI18n'
 
 const props = defineProps({
   currentLang: {
@@ -65,7 +65,7 @@ function selectLanguage(lang) {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgba(244, 239, 228, .72);
+  color: var(--text-on-dark-muted);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .17em;
@@ -80,13 +80,13 @@ function selectLanguage(lang) {
   cursor: pointer;
 }
 .lang-switch a:hover {
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-weight: 800;
-  border-color: #ffffff;
+  border-color: var(--text-on-dark);
 }
 .lang-switch [aria-current="page"] {
-  color: var(--cream);
-  border-bottom: 1px solid var(--logo-red, #db2a26);
+  color: var(--text-on-dark);
+  border-bottom: 1px solid var(--logo-red);
   padding-bottom: 1px;
 }
 .lang-switch .sep {

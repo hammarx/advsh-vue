@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../i18n/useI18n'
+import { useSiteStore } from '../../stores/siteStore'
+import SectionLabel from '../ui/SectionLabel.vue'
+import StatList from '../ui/StatList.vue'
 
 const props = defineProps({
   sectionId: {
@@ -13,15 +15,15 @@ const props = defineProps({
   },
 })
 
-const { t } = useI18n()
-const intro = computed(() => props.introData ?? t.value.intro)
+const store = useSiteStore()
+const intro = computed(() => props.introData ?? store.intro)
 </script>
 
 <template>
   <section class="section" :id="sectionId">
     <div class="shell intro-grid">
       <div class="intro-side">
-        <p class="label">{{ intro.label }}</p>
+        <SectionLabel :text="intro.label" />
         <p class="intro-note">{{ intro.note }}</p>
       </div>
 
@@ -37,15 +39,7 @@ const intro = computed(() => props.introData ?? t.value.intro)
           </p>
         </div>
 
-        <div class="stat-row">
-          <div v-for="(stat, idx) in intro.stats" :key="idx" class="stat">
-            <strong>
-              <em v-if="stat.accent">{{ stat.value }}</em>
-              <template v-else>{{ stat.value }}</template>
-            </strong>
-            <span>{{ stat.label }}</span>
-          </div>
-        </div>
+        <StatList :items="intro.stats" variant="intro" />
       </div>
     </div>
   </section>
@@ -54,14 +48,14 @@ const intro = computed(() => props.introData ?? t.value.intro)
 <style scoped>
 .intro-grid {
   display: grid;
-  grid-template-columns: minmax(0, .62fr) minmax(0, 1.38fr);
+  grid-template-columns: minmax(0, 0.62fr) minmax(0, 1.38fr);
   gap: clamp(28px, 5vw, 72px);
 }
 .intro-side,
 .intro-main {
   min-width: 0;
 }
-.intro-side .label {
+.intro-side :deep(.label) {
   margin-bottom: 24px;
 }
 .intro-side .intro-note {
@@ -77,28 +71,28 @@ const intro = computed(() => props.introData ?? t.value.intro)
   font-family: var(--display);
   font-size: clamp(2.5rem, 5.3vw, 4.5rem);
   font-weight: 500;
-  line-height: .96;
-  letter-spacing: -.045em;
+  line-height: 0.96;
+  letter-spacing: -0.045em;
 }
-html[lang="ru"] .intro-main h2 {
+html[lang='ru'] .intro-main h2 {
   font-size: clamp(2.2rem, 4.4vw, 3.8rem);
-  letter-spacing: -.02em;
+  letter-spacing: -0.02em;
 }
-html[lang="ar"] .intro-main h2 {
+html[lang='ar'] .intro-main h2 {
   letter-spacing: 0;
   line-height: 1.12;
 }
 
 .intro-main h2 .intro-accent {
   display: inline-block;
-  margin-left: .12em;
+  margin-left: 0.12em;
   font-style: italic;
   font-weight: 400;
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
 }
-[dir="rtl"] .intro-main h2 .intro-accent {
+[dir='rtl'] .intro-main h2 .intro-accent {
   margin-left: 0;
-  margin-right: .12em;
+  margin-right: 0.12em;
 }
 
 .intro-text {
@@ -113,42 +107,6 @@ html[lang="ar"] .intro-main h2 {
   line-height: 1.7;
 }
 
-.stat-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-  margin-top: 38px;
-  padding-top: 24px;
-  border-top: 1px solid var(--line);
-}
-.stat strong {
-  display: block;
-  font-family: var(--display);
-  font-size: clamp(2rem, 3.6vw, 3rem);
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -.04em;
-}
-html[lang="ar"] .stat strong,
-[dir="rtl"] .stat strong {
-  direction: ltr;
-  unicode-bidi: isolate;
-  text-align: right;
-}
-.stat strong em {
-  font-style: normal;
-  color: var(--logo-red, #db2a26);
-}
-.stat span {
-  display: block;
-  margin-top: 7px;
-  color: var(--muted);
-  font-size: 9.5px;
-  font-weight: 750;
-  letter-spacing: .11em;
-  text-transform: uppercase;
-}
-
 @media (max-width: 980px) {
   .intro-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -160,7 +118,7 @@ html[lang="ar"] .stat strong,
     justify-content: space-between;
     gap: 20px;
   }
-  .intro-side .label {
+  .intro-side :deep(.label) {
     margin-bottom: 0;
   }
 }
@@ -169,7 +127,7 @@ html[lang="ar"] .stat strong,
   .intro-side {
     display: block;
   }
-  .intro-side .label {
+  .intro-side :deep(.label) {
     margin-bottom: 12px;
   }
   .intro-side .intro-note {
@@ -178,30 +136,6 @@ html[lang="ar"] .stat strong,
   .intro-text {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
-  }
-  .stat-row {
-    gap: 14px;
-  }
-  .stat strong {
-    font-size: 1.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .stat-row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 15px;
-  }
-  .stat {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-  }
-  .stat strong {
-    font-size: 1.8rem;
-  }
-  .stat span {
-    margin-top: 0;
   }
 }
 </style>

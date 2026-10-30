@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import LanguageSwitcher from './LanguageSwitcher.vue'
-import { useI18n } from '../i18n/useI18n'
+import { useI18n } from '../../i18n/useI18n'
 
 const props = defineProps({
   announcement: {
@@ -42,8 +42,8 @@ const resolvedAnnouncement = computed(() => props.announcement ?? t.value.nav.an
 
 <style scoped>
 .topline {
-  color: rgba(244, 239, 228, .88);
-  background: var(--logo-blue, #082f77);
+  color: var(--text-on-dark-soft);
+  background: var(--logo-blue);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: .17em;
@@ -72,8 +72,8 @@ const resolvedAnnouncement = computed(() => props.announcement ?? t.value.nav.an
   height: 6px;
   flex: none;
   border-radius: 50%;
-  background: var(--logo-red, #db2a26);
-  box-shadow: 0 0 0 4px rgba(219, 42, 38, .28);
+  background: var(--logo-red);
+  box-shadow: 0 0 0 4px var(--logo-red-glow);
 }
 
 @media (max-width: 760px) {

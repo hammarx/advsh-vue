@@ -1,21 +1,13 @@
 <script setup>
-import Navbar from './components/Navbar.vue'
-import HeroSection from './components/HeroSection.vue'
-import MarqueeBar from './components/MarqueeBar.vue'
-import IntroSection from './components/IntroSection.vue'
-import ServicesSection from './components/ServicesSection.vue'
-import FeatureSection from './components/FeatureSection.vue'
-import SiteFooter from './components/SiteFooter.vue'
+import Navbar from './components/layout/Navbar.vue'
+import SiteFooter from './components/layout/SiteFooter.vue'
+import HomeView from './views/HomeView.vue'
 </script>
 
 <template>
   <Navbar />
   <main id="main">
-    <HeroSection />
-    <MarqueeBar />
-    <IntroSection />
-    <ServicesSection />
-    <FeatureSection />
+    <HomeView />
   </main>
   <SiteFooter />
 </template>

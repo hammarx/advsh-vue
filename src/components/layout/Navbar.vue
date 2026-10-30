@@ -1,85 +1,45 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import TopBar from './TopBar.vue'
 import BrandLogo from './BrandLogo.vue'
-import { useI18n } from '../i18n/useI18n'
+import { useSiteStore } from '../../stores/siteStore'
 
 const props = defineProps({
-  skipLabel: {
-    type: String,
-    default: undefined,
-  },
-  skipTarget: {
-    type: String,
-    default: '#main',
-  },
-  announcement: {
-    type: String,
-    default: undefined,
-  },
-  currentLang: {
-    type: String,
-    default: undefined,
-  },
-  languages: {
-    type: Array,
-    default: undefined,
-  },
-  activeHref: {
-    type: String,
-    default: '',
-  },
-  navItems: {
-    type: Array,
-    default: undefined,
-  },
-  cta: {
-    type: Object,
-    default: undefined,
-  },
-  reportCta: {
-    type: Object,
-    default: undefined,
-  },
-  menuLabel: {
-    type: String,
-    default: undefined,
-  },
-  menuAriaLabel: {
-    type: String,
-    default: undefined,
-  },
-  navAriaLabel: {
-    type: String,
-    default: undefined,
-  },
+  skipLabel: { type: String, default: undefined },
+  skipTarget: { type: String, default: '#main' },
+  announcement: { type: String, default: undefined },
+  currentLang: { type: String, default: undefined },
+  languages: { type: Array, default: undefined },
+  activeHref: { type: String, default: '' },
+  navItems: { type: Array, default: undefined },
+  cta: { type: Object, default: undefined },
+  reportCta: { type: Object, default: undefined },
+  menuLabel: { type: String, default: undefined },
+  menuAriaLabel: { type: String, default: undefined },
+  navAriaLabel: { type: String, default: undefined },
 })
 
 const emit = defineEmits(['navigate', 'lang-change'])
-const isMenuOpen = ref(false)
-const internalActiveHref = ref(
-  props.activeHref || (typeof window !== 'undefined' ? window.location.hash : '')
-)
-const { t } = useI18n()
+const store = useSiteStore()
+const { nav, activeHref: storeActiveHref, isMobileMenuOpen } = storeToRefs(store)
 
-const currentActiveHref = computed(() => props.activeHref || internalActiveHref.value)
-const resolvedSkipLabel = computed(() => props.skipLabel ?? t.value.nav.skipToContent)
-const resolvedNavItems = computed(() => props.navItems ?? t.value.nav.items)
-const resolvedCta = computed(() => props.cta ?? t.value.nav.cta)
-const resolvedReportCta = computed(() => props.reportCta ?? t.value.nav.reportCta)
-const resolvedMenuLabel = computed(() => props.menuLabel ?? t.value.nav.menu)
-const resolvedMenuAriaLabel = computed(() => props.menuAriaLabel ?? t.value.nav.menuAriaLabel)
-const resolvedNavAriaLabel = computed(() => props.navAriaLabel ?? t.value.nav.mainNavAriaLabel)
+const currentActiveHref = computed(() => props.activeHref || storeActiveHref.value)
+const resolvedSkipLabel = computed(() => props.skipLabel ?? nav.value.skipToContent)
+const resolvedNavItems = computed(() => props.navItems ?? nav.value.items)
+const resolvedCta = computed(() => props.cta ?? nav.value.cta)
+const resolvedReportCta = computed(() => props.reportCta ?? nav.value.reportCta)
+const resolvedMenuLabel = computed(() => props.menuLabel ?? nav.value.menu)
+const resolvedMenuAriaLabel = computed(() => props.menuAriaLabel ?? nav.value.menuAriaLabel)
+const resolvedNavAriaLabel = computed(() => props.navAriaLabel ?? nav.value.mainNavAriaLabel)
 
 function handleNavClick(item, event) {
-  internalActiveHref.value = item.href
-  isMenuOpen.value = false
+  store.setActiveHref(item.href)
   emit('navigate', { item, event })
 }
 
 function handleLogoClick() {
-  internalActiveHref.value = ''
-  isMenuOpen.value = false
+  store.clearActiveHref()
 }
 </script>
 
@@ -99,7 +59,7 @@ function handleLogoClick() {
 
       <input
         id="menu-toggle"
-        v-model="isMenuOpen"
+        v-model="isMobileMenuOpen"
         class="menu-toggle"
         type="checkbox"
         :aria-label="resolvedMenuAriaLabel"
@@ -170,7 +130,7 @@ function handleLogoClick() {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(244, 239, 228, .92);
+  background: var(--cream-glass);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -205,7 +165,7 @@ function handleLogoClick() {
   bottom: 0;
   left: 0;
   height: 1.5px;
-  background: var(--logo-red, #db2a26);
+  background: var(--logo-red);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform .25s ease;
@@ -215,7 +175,7 @@ function handleLogoClick() {
   transform: scaleX(1);
 }
 .main-nav > a[aria-current="page"] {
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
 }
 
 .nav-actions {
@@ -230,7 +190,7 @@ function handleLogoClick() {
   gap: 8px;
   padding: 11px 20px;
   border-radius: 999px;
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-size: 13.5px;
   font-weight: 700;
   text-decoration: none;
@@ -238,7 +198,7 @@ function handleLogoClick() {
   transition: background .25s, transform .25s;
 }
 .nav-cta .arr {
-  color: #ffffff;
+  color: var(--text-on-dark);
   transition: transform .25s;
 }
 .nav-cta:hover {
@@ -249,17 +209,17 @@ function handleLogoClick() {
 }
 
 .nav-cta--blue {
-  background: var(--logo-blue, #082f77);
+  background: var(--logo-blue);
 }
 .nav-cta--blue:hover {
-  background: #052259;
+  background: var(--logo-blue-hover);
 }
 
 .nav-cta--red {
-  background: var(--logo-red, #db2a26);
+  background: var(--logo-red);
 }
 .nav-cta--red:hover {
-  background: #b8201d;
+  background: var(--logo-red-hover);
 }
 
 @media (min-width: 1081px) {

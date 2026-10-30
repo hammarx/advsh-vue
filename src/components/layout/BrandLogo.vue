@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../i18n/useI18n'
-import logoSvg from '../assets/advsh-logo.svg'
+import { useI18n } from '../../i18n/useI18n'
+import logoSvg from '../../assets/advsh-logo.svg'
 
 const props = defineProps({
   href: {

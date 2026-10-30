@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../i18n/useI18n'
+import { useSiteStore } from '../../stores/siteStore'
 import BrandLogo from './BrandLogo.vue'
 
 const props = defineProps({
@@ -16,16 +16,20 @@ const props = defineProps({
   legalLinks: { type: Array, default: null },
 })
 
-const { t } = useI18n()
+const store = useSiteStore()
 
-const footer = computed(() => t.value.footer || {})
+const footer = computed(() => store.footer || {})
 const displayDescription = computed(() => props.description ?? footer.value.description)
-const displayEmail = computed(() => props.email ?? footer.value.email ?? 'info@advsh.de')
+const displayEmail = computed(() => props.email ?? footer.value.email ?? store.contact.generalEmail)
 const displayColumns = computed(() => props.columns ?? footer.value.columns ?? [])
 const displayContactTitle = computed(() => props.contactTitle ?? footer.value.contactTitle)
-const displayAddressLines = computed(() => props.addressLines ?? footer.value.addressLines ?? [])
-const displayPhone = computed(() => props.phone ?? footer.value.phone)
-const displayPhoneHref = computed(() => props.phoneHref ?? footer.value.phoneHref)
+const displayAddressLines = computed(
+  () => props.addressLines ?? footer.value.addressLines ?? store.contact.addressLines
+)
+const displayPhone = computed(() => props.phone ?? footer.value.phone ?? store.contact.generalPhone)
+const displayPhoneHref = computed(
+  () => props.phoneHref ?? footer.value.phoneHref ?? store.contact.generalPhoneHref
+)
 const displayCopyright = computed(() => props.copyright ?? footer.value.copyright)
 const displayFunding = computed(() => props.funding ?? footer.value.funding)
 const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalLinks ?? [])
@@ -89,7 +93,7 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
   margin-top: clamp(60px, 8vw, 96px);
   padding: 66px 0 26px;
   color: var(--cream);
-  background: var(--logo-blue, #082f77);
+  background: var(--logo-blue);
 }
 
 .footer-top {
@@ -97,13 +101,13 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
   grid-template-columns: 1.7fr 1fr 1fr 1fr;
   gap: 40px;
   padding-bottom: 46px;
-  border-bottom: 1px solid rgba(244, 239, 228, 0.16);
+  border-bottom: 1px solid var(--line-on-dark);
 }
 
 .footer-brand > p {
   max-width: 34ch;
   margin-top: 20px;
-  color: rgba(244, 239, 228, 0.72);
+  color: var(--text-on-dark-muted);
   font-size: 13px;
   line-height: 1.65;
 }
@@ -111,7 +115,7 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
 .footer-brand .footer-mail {
   display: inline-block;
   margin-top: 15px;
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-family: var(--display);
   font-size: 19px;
   font-weight: 700;
@@ -120,7 +124,7 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
 }
 
 .footer-brand .footer-mail:hover {
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -128,7 +132,7 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
 
 .footer-col h3 {
   margin-bottom: 14px;
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -148,7 +152,7 @@ html[lang='ru'] .footer-col h3 {
 .footer-col address {
   display: block;
   padding: 5px 0;
-  color: rgba(244, 239, 228, 0.72);
+  color: var(--text-on-dark-muted);
   font-size: 13px;
   font-style: normal;
   line-height: 1.55;
@@ -157,7 +161,7 @@ html[lang='ru'] .footer-col h3 {
 }
 
 .footer-col a:hover {
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -182,7 +186,7 @@ html[lang='ru'] .footer-col h3 {
   justify-content: space-between;
   gap: 24px;
   padding-top: 22px;
-  color: rgba(244, 239, 228, 0.65);
+  color: var(--text-on-dark-muted);
   font-size: 9px;
   font-weight: 650;
   letter-spacing: 0.08em;
@@ -205,7 +209,7 @@ html[lang='ar'] .footer-bottom {
 }
 
 .footer-bottom a:hover {
-  color: #ffffff;
+  color: var(--text-on-dark);
   font-weight: 800;
   text-decoration: underline;
   text-underline-offset: 3px;

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../i18n/useI18n'
+import { useSiteStore } from '../../stores/siteStore'
 
 const props = defineProps({
   items: {
@@ -9,8 +9,8 @@ const props = defineProps({
   },
 })
 
-const { t } = useI18n()
-const marqueeItems = computed(() => props.items ?? t.value.marquee)
+const store = useSiteStore()
+const marqueeItems = computed(() => props.items ?? store.marquee)
 </script>
 
 <template>
@@ -36,9 +36,9 @@ const marqueeItems = computed(() => props.items ?? t.value.marquee)
 .marquee {
   overflow: hidden;
   color: var(--cream);
-  background: var(--logo-blue, #082f77);
-  border-top: 1px solid var(--logo-blue, #082f77);
-  border-bottom: 1px solid var(--logo-blue, #082f77);
+  background: var(--logo-blue);
+  border-top: 1px solid var(--logo-blue);
+  border-bottom: 1px solid var(--logo-blue);
   direction: ltr;
 }
 .marquee-track {
@@ -66,7 +66,7 @@ const marqueeItems = computed(() => props.items ?? t.value.marquee)
   white-space: nowrap;
 }
 .marquee-group i {
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
   font-size: 15px;
   font-style: normal;
 }

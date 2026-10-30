@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../i18n/useI18n'
-import heroTeamImg from '../assets/img/hero-team.jpg'
+import { useSiteStore } from '../../stores/siteStore'
+import SectionLabel from '../ui/SectionLabel.vue'
+import AppButton from '../ui/AppButton.vue'
+import StatList from '../ui/StatList.vue'
+import heroTeamImg from '../../assets/img/hero-team.jpg'
 
 const props = defineProps({
   heroData: {
@@ -14,15 +17,15 @@ const props = defineProps({
   },
 })
 
-const { t } = useI18n()
-const hero = computed(() => props.heroData ?? t.value.hero)
+const store = useSiteStore()
+const hero = computed(() => props.heroData ?? store.hero)
 </script>
 
 <template>
   <section class="hero">
     <div class="shell hero-grid">
       <div class="hero-copy">
-        <p class="label hero-kicker">{{ hero.kicker }}</p>
+        <SectionLabel class="hero-kicker" :text="hero.kicker" />
         <h1>
           <span class="hero-line">{{ hero.titleLine1 }}</span>
           <span class="hero-line">
@@ -34,33 +37,22 @@ const hero = computed(() => props.heroData ?? t.value.hero)
         <p class="hero-lede">{{ hero.lede }}</p>
 
         <div class="btn-row hero-actions">
-          <a
+          <AppButton
             v-if="hero.primaryCta"
-            class="btn btn--primary"
+            variant="primary"
             :href="hero.primaryCta.href"
-          >
-            {{ hero.primaryCta.label }}
-            <span v-if="hero.primaryCta.arrow" class="arr">{{ hero.primaryCta.arrow }}</span>
-          </a>
-          <a
+            :label="hero.primaryCta.label"
+            :arrow="hero.primaryCta.arrow"
+          />
+          <AppButton
             v-if="hero.secondaryCta"
-            class="btn btn--outline"
+            variant="outline"
             :href="hero.secondaryCta.href"
-          >
-            {{ hero.secondaryCta.label }}
-          </a>
+            :label="hero.secondaryCta.label"
+          />
         </div>
 
-        <div class="hero-facts">
-          <div
-            v-for="(fact, idx) in hero.facts"
-            :key="idx"
-            class="hero-fact"
-          >
-            <strong>{{ fact.value }}</strong>
-            <span>{{ fact.label }}</span>
-          </div>
-        </div>
+        <StatList :items="hero.facts" variant="hero" />
       </div>
 
       <div class="hero-visual">
@@ -149,7 +141,7 @@ const hero = computed(() => props.heroData ?? t.value.hero)
   position: relative;
   font-style: italic;
   font-weight: 400;
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
 }
 .hero h1 em.inline-accent {
   margin-left: .22em;
@@ -161,7 +153,7 @@ const hero = computed(() => props.heroData ?? t.value.hero)
   bottom: .04em;
   left: 0;
   height: .05em;
-  background: var(--logo-blue, #082f77);
+  background: var(--logo-blue);
   z-index: -1;
 }
 
@@ -186,43 +178,6 @@ html[lang="ar"] .hero h1 {
 }
 .hero-actions {
   margin-top: 31px;
-}
-
-.hero-facts {
-  display: flex;
-  gap: 28px;
-  margin-top: 42px;
-  flex-wrap: wrap;
-}
-.hero-fact {
-  padding-left: 16px;
-  border-left: 1px solid var(--line-strong);
-}
-[dir="rtl"] .hero-fact {
-  padding-left: 0;
-  padding-right: 16px;
-  border-left: 0;
-  border-right: 1px solid var(--line-strong);
-}
-.hero-fact strong {
-  display: block;
-  font-family: var(--display);
-  font-size: 22px;
-  font-weight: 550;
-  line-height: 1;
-}
-[dir="rtl"] .hero-fact strong {
-  direction: ltr;
-  unicode-bidi: isolate;
-}
-.hero-fact span {
-  display: block;
-  margin-top: 5px;
-  color: var(--muted);
-  font-size: 9.5px;
-  font-weight: 750;
-  letter-spacing: .12em;
-  text-transform: uppercase;
 }
 
 .hero-visual {
@@ -304,7 +259,7 @@ html[lang="ar"] .hero h1 {
 .hero-note .star {
   display: block;
   margin-bottom: 5px;
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
   font-size: 17px;
   line-height: 1;
 }
@@ -338,8 +293,8 @@ html[lang="ar"] .hero h1 {
   height: 124px;
   padding: 12px;
   border-radius: 50%;
-  color: #ffffff;
-  background: var(--logo-red, #db2a26);
+  color: var(--text-on-dark);
+  background: var(--logo-red);
   box-shadow: 0 0 0 7px var(--cream);
   font-size: 11.5px;
   font-weight: 800;
@@ -364,8 +319,8 @@ html[lang="ar"] .hero h1 {
   line-height: 1;
 }
 .hero-circle:hover {
-  background: var(--logo-blue, #082f77);
-  color: #ffffff;
+  background: var(--logo-blue);
+  color: var(--text-on-dark);
   transform: rotate(0deg) scale(1.04);
 }
 

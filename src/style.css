@@ -1,20 +1,43 @@
 :root {
+  /* 1. Official Logo Brand Palette */
   --logo-blue: #082f77;
+  --logo-blue-hover: #052259;
+  --logo-blue-soft: rgba(8, 47, 119, 0.1);
+  --logo-blue-shadow: rgba(8, 47, 119, 0.8);
+
   --logo-red: #db2a26;
+  --logo-red-hover: #b8201d;
+  --logo-red-glow: rgba(219, 42, 38, 0.28);
+  --logo-red-shadow: rgba(219, 42, 38, 0.85);
+
+  --yellow: #f0c24b;
+
+  /* 2. Surfaces & Backgrounds */
+  --cream: #f4efe4;
+  --cream-glass: rgba(244, 239, 228, 0.92);
+  --paper: #fbf8f0;
+  --paper-glass: rgba(251, 248, 240, 0.6);
+  --white: #ffffff;
+
+  /* 3. Typography & Borders */
   --ink: #10201f;
   --ink-soft: #263a36;
-  --teal: #0d5c50;
-  --teal-deep: #08443b;
-  --mint: #d8e7dc;
-  --cream: #f4efe4;
-  --paper: #fbf8f0;
-  --white: #fffdf8;
-  --coral: #e75d3d;
-  --coral-deep: #cf4a2e;
-  --yellow: #f0c24b;
   --muted: #5e6b64;
-  --line: rgba(16, 32, 31, .14);
-  --line-strong: rgba(16, 32, 31, .28);
+  --text-on-dark: #ffffff;
+  --text-on-dark-soft: rgba(244, 239, 228, 0.85);
+  --text-on-dark-muted: rgba(244, 239, 228, 0.72);
+  --line: rgba(16, 32, 31, 0.14);
+  --line-strong: rgba(16, 32, 31, 0.28);
+  --line-on-dark: rgba(255, 255, 255, 0.25);
+
+  /* Legacy aliases mapped to brand palette */
+  --teal: var(--logo-blue);
+  --teal-deep: var(--logo-blue-hover);
+  --mint: var(--logo-blue-soft);
+  --coral: var(--logo-red);
+  --coral-deep: var(--logo-red-hover);
+
+  /* 4. Typography & Layout */
   --display: "Fraunces", "Iowan Old Style", Georgia, serif;
   --sans: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   --shell: 1220px;
@@ -122,14 +145,14 @@ h1 em,
 h2 em {
   font-style: italic;
   font-weight: 400;
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
 }
 .display--teal em,
 h2 em.accent-teal {
   position: relative;
   font-style: italic;
   font-weight: 400;
-  color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
 }
 .display--teal em::after,
 h2 em.accent-teal::after {
@@ -139,7 +162,7 @@ h2 em.accent-teal::after {
   bottom: .04em;
   left: 0;
   height: .05em;
-  background: var(--logo-blue, #082f77);
+  background: var(--logo-blue);
   z-index: -1;
 }
 
@@ -185,8 +208,8 @@ h1 {
   white-space: nowrap;
 }
 .link-more:hover {
-  color: var(--logo-red, #db2a26);
-  border-color: var(--logo-red, #db2a26);
+  color: var(--logo-red);
+  border-color: var(--logo-red);
 }
 .link-more .arr {
   transition: transform .25s;
@@ -226,13 +249,13 @@ html[lang="ru"] .label {
   height: 6px;
   flex: none;
   border-radius: 50%;
-  background: var(--logo-red, #db2a26);
+  background: var(--logo-red);
 }
 .label--light {
-  color: rgba(244, 239, 228, .85);
+  color: var(--text-on-dark-soft);
 }
 .label--light::before {
-  background: #ffffff;
+  background: var(--text-on-dark);
 }
 
 .btn {
@@ -264,21 +287,21 @@ html[lang="ru"] .label {
 }
 
 .btn--primary {
-  color: #ffffff;
-  background: var(--logo-blue, #082f77);
+  color: var(--text-on-dark);
+  background: var(--logo-blue);
 }
 .btn--primary:hover {
-  background: #052259;
-  box-shadow: 0 14px 28px -18px rgba(8, 47, 119, .8);
+  background: var(--logo-blue-hover);
+  box-shadow: 0 14px 28px -18px var(--logo-blue-shadow);
 }
 
 .btn--coral {
-  color: var(--ink);
-  background: var(--coral);
+  color: var(--text-on-dark);
+  background: var(--logo-red);
 }
 .btn--coral:hover {
-  background: var(--coral-deep);
-  box-shadow: 0 14px 28px -18px rgba(207, 74, 46, .9);
+  background: var(--logo-red-hover);
+  box-shadow: 0 14px 28px -18px var(--logo-red-shadow);
 }
 
 .btn--outline {
@@ -293,15 +316,15 @@ html[lang="ru"] .label {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--logo-red, #db2a26);
+  background: var(--logo-red);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform .35s cubic-bezier(.22, 1, .36, 1);
   z-index: -1;
 }
 .btn--outline:hover {
-  color: #ffffff;
-  border-color: var(--logo-red, #db2a26);
+  color: var(--text-on-dark);
+  border-color: var(--logo-red);
 }
 .btn--outline:hover::before {
   transform: scaleX(1);
@@ -318,15 +341,15 @@ html[lang="ru"] .label {
   content: "";
   position: absolute;
   inset: 0;
-  background: var(--logo-red, #db2a26);
+  background: var(--logo-red);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform .35s cubic-bezier(.22, 1, .36, 1);
   z-index: -1;
 }
 .btn--light:hover {
-  color: #ffffff;
-  border-color: var(--logo-red, #db2a26);
+  color: var(--text-on-dark);
+  border-color: var(--logo-red);
   box-shadow: 0 14px 28px -18px rgba(16, 32, 31, .6);
 }
 .btn--light:hover::before {
