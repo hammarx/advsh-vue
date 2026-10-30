@@ -1,9 +1,8 @@
 <script setup>
 import { computed } from 'vue'
-import { useSiteStore } from '../../stores/siteStore'
-import SectionLabel from '../ui/SectionLabel.vue'
-import AppButton from '../ui/AppButton.vue'
-import defaultBeratungImg from '../../assets/img/beratung.jpg'
+import { useSiteStore } from '@/stores/siteStore'
+import { SectionLabel, AppButton } from '@/components/ui'
+import defaultBeratungImg from '@/assets/img/beratung.jpg'
 
 const props = defineProps({
   sectionId: { type: String, default: 'beratung' },
@@ -38,7 +37,14 @@ const displayCta = computed(() => props.cta ?? feature.value.cta)
     <div class="shell">
       <div class="feature">
         <div class="feature-media">
-          <img :src="imageSrc" :alt="displayImageAlt" width="1200" height="800" />
+          <img
+            :src="imageSrc"
+            :alt="displayImageAlt"
+            width="1200"
+            height="800"
+            loading="lazy"
+            decoding="async"
+          />
           <span v-if="displayTag" class="feature-tag">{{ displayTag }}</span>
         </div>
 

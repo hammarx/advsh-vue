@@ -1,8 +1,26 @@
 import { ref, reactive, computed, watchEffect } from 'vue'
 import { defineStore } from 'pinia'
-import { LANGUAGES, translations } from '../i18n/translations'
+import { LANGUAGES, translations } from '@/i18n/translations'
 
 const STORAGE_KEY = 'advsh_lang'
+const FONT_LINKS = {
+  ar: 'https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap',
+  ru: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400;1,600&display=swap',
+}
+
+function ensureLocaleFontLoaded(langCode) {
+  if (typeof document === 'undefined') return
+  const href = FONT_LINKS[langCode]
+  if (!href) return
+  const id = `advsh-font-${langCode}`
+  if (!document.getElementById(id)) {
+    const link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    link.href = href
+    document.head.appendChild(link)
+  }
+}
 
 function getInitialLang() {
   if (typeof window !== 'undefined' && window.localStorage) {
@@ -108,6 +126,7 @@ export const useSiteStore = defineStore('site', () => {
 
     document.documentElement.lang = langMeta.code
     document.documentElement.dir = langMeta.dir
+    ensureLocaleFontLoaded(langMeta.code)
     if (localeData.pageTitle) {
       document.title = localeData.pageTitle
     }

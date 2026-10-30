@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import LanguageSwitcher from './LanguageSwitcher.vue'
-import { useI18n } from '../../i18n/useI18n'
+import { useI18n } from '@/i18n/useI18n'
 
 const props = defineProps({
   announcement: {

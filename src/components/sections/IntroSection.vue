@@ -1,8 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import { useSiteStore } from '../../stores/siteStore'
-import SectionLabel from '../ui/SectionLabel.vue'
-import StatList from '../ui/StatList.vue'
+import { useSiteStore } from '@/stores/siteStore'
+import { SectionLabel, StatList } from '@/components/ui'
 
 const props = defineProps({
   sectionId: {

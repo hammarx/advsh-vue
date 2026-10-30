@@ -1,10 +1,8 @@
 <script setup>
 import { computed } from 'vue'
-import { useSiteStore } from '../../stores/siteStore'
-import SectionLabel from '../ui/SectionLabel.vue'
-import AppButton from '../ui/AppButton.vue'
-import StatList from '../ui/StatList.vue'
-import heroTeamImg from '../../assets/img/hero-team.jpg'
+import { useSiteStore } from '@/stores/siteStore'
+import { SectionLabel, AppButton, StatList } from '@/components/ui'
+import heroTeamImg from '@/assets/img/hero-team.jpg'
 
 const props = defineProps({
   heroData: {
@@ -62,6 +60,8 @@ const hero = computed(() => props.heroData ?? store.hero)
             :alt="hero.imageAlt"
             width="1500"
             height="1000"
+            fetchpriority="high"
+            decoding="async"
           />
         </div>
         <div class="hero-note">

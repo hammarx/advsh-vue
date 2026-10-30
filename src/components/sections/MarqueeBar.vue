@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useSiteStore } from '../../stores/siteStore'
+import { useSiteStore } from '@/stores/siteStore'
 
 const props = defineProps({
   items: {

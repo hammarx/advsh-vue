@@ -1,5 +1,5 @@
 import { storeToRefs } from 'pinia'
-import { useSiteStore } from '../stores/siteStore'
+import { useSiteStore } from '@/stores/siteStore'
 
 export function useI18n() {
   const store = useSiteStore()

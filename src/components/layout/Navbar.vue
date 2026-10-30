@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import TopBar from './TopBar.vue'
 import BrandLogo from './BrandLogo.vue'
-import { useSiteStore } from '../../stores/siteStore'
+import { useSiteStore } from '@/stores/siteStore'
 
 const props = defineProps({
   skipLabel: { type: String, default: undefined },

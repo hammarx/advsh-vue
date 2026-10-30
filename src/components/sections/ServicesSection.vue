@@ -1,8 +1,7 @@
 <script setup>
 import { computed } from 'vue'
-import { useSiteStore } from '../../stores/siteStore'
-import SectionHeader from '../ui/SectionHeader.vue'
-import ServiceCard from '../ui/ServiceCard.vue'
+import { useSiteStore } from '@/stores/siteStore'
+import { SectionHeader, ServiceCard } from '@/components/ui'
 
 const props = defineProps({
   sectionId: { type: String, default: 'angebote' },
