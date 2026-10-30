@@ -60,7 +60,8 @@ const resolvedSubtitles = computed(() => props.subtitleLines ?? t.value.nav.logo
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 15px;
+  gap: 14px;
+  flex-shrink: 0;
   color: inherit;
   text-decoration: none;
 }
@@ -73,23 +74,32 @@ const resolvedSubtitles = computed(() => props.subtitleLines ?? t.value.nav.logo
 }
 
 .logo-sub {
-  padding-left: 15px;
+  flex-shrink: 0;
+  padding-left: 14px;
   border-left: 1px solid var(--line-strong);
   color: var(--muted);
   font-size: 9.5px;
   font-weight: 700;
   line-height: 1.45;
-  letter-spacing: .13em;
+  letter-spacing: .12em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-:global(html[lang="ru"]) .logo-sub {
-  font-size: 9px;
-  letter-spacing: .08em;
+html[lang="ru"] .logo-sub,
+html[lang="pl"] .logo-sub {
+  font-size: 8.5px;
+  letter-spacing: .06em;
 }
-:global([dir="rtl"]) .logo-sub {
+
+html[lang="ar"] .logo-sub {
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+[dir="rtl"] .logo-sub {
   padding-left: 0;
-  padding-right: 15px;
+  padding-right: 14px;
   border-left: 0;
   border-right: 1px solid var(--line-strong);
 }
@@ -105,7 +115,7 @@ const resolvedSubtitles = computed(() => props.subtitleLines ?? t.value.nav.logo
   border-color: rgba(244, 239, 228, .22);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1240px) {
   .logo:not(.logo--footer) .logo-sub {
     display: none;
   }
@@ -113,13 +123,13 @@ const resolvedSubtitles = computed(() => props.subtitleLines ?? t.value.nav.logo
 
 @media (max-width: 760px) {
   .logo:not(.logo--footer) .logo-mark {
-    height: 35px;
+    height: 34px;
   }
 }
 
 @media (max-width: 480px) {
   .logo:not(.logo--footer) .logo-mark {
-    height: 32px;
+    height: 30px;
   }
 }
 </style>

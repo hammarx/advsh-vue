@@ -81,15 +81,26 @@ function selectLanguage(lang) {
 }
 .lang-switch a:hover {
   color: var(--cream);
-  border-color: var(--coral);
+  border-color: var(--logo-red, #db2a26);
 }
 .lang-switch [aria-current="page"] {
   color: var(--cream);
-  border-bottom: 1px solid var(--coral);
+  border-bottom: 1px solid var(--logo-red, #db2a26);
   padding-bottom: 1px;
 }
 .lang-switch .sep {
   color: rgba(244, 239, 228, .42);
+}
+
+@media (max-width: 760px) {
+  .lang-switch {
+    gap: 10px;
+    font-size: 11px;
+  }
+  .lang-switch a,
+  .lang-switch [aria-current="page"] {
+    padding: 3px 2px;
+  }
 }
 
 :global(html[lang="ar"]) .lang-switch {

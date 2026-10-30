@@ -42,8 +42,8 @@ const resolvedAnnouncement = computed(() => props.announcement ?? t.value.nav.an
 
 <style scoped>
 .topline {
-  color: rgba(244, 239, 228, .78);
-  background: var(--ink);
+  color: rgba(244, 239, 228, .88);
+  background: var(--logo-blue, #082f77);
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: .17em;
@@ -72,8 +72,8 @@ const resolvedAnnouncement = computed(() => props.announcement ?? t.value.nav.an
   height: 6px;
   flex: none;
   border-radius: 50%;
-  background: var(--coral);
-  box-shadow: 0 0 0 4px rgba(231, 93, 61, .18);
+  background: var(--logo-red, #db2a26);
+  box-shadow: 0 0 0 4px rgba(219, 42, 38, .28);
 }
 
 @media (max-width: 760px) {
