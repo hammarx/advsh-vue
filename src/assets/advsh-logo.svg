@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 165" fill="none" role="img" aria-label="advsh">
+  <defs>
+    <!-- Full front figure path -->
+    <path
+      id="person-full"
+      d="M 16 148
+         V 140
+         A 14 14 0 0 1 30 126
+         H 54
+         A 10 10 0 0 0 64 116
+         V 97
+         A 42 42 0 1 1 108 97
+         V 116
+         A 10 10 0 0 0 118 126
+         H 142
+         A 14 14 0 0 1 156 140
+         V 148"
+    />
+    <!-- Right-half figure path (starts at -135 deg on the head circle) -->
+    <path
+      id="person-half"
+      d="M 56.3 31.3
+         A 42 42 0 1 1 108 97
+         V 116
+         A 10 10 0 0 0 118 126
+         H 142
+         A 14 14 0 0 1 156 140
+         V 148"
+    />
+    <!-- Closed interior for occlusion mask -->
+    <path
+      id="person-interior"
+      d="M 16 156
+         V 140
+         A 14 14 0 0 1 30 126
+         H 54
+         A 10 10 0 0 0 64 116
+         V 97
+         A 42 42 0 1 1 108 97
+         V 116
+         A 10 10 0 0 0 118 126
+         H 142
+         A 14 14 0 0 1 156 140
+         V 156
+         Z"
+    />
+
+    <!-- Mask for Middle figure (excludes Front figure) -->
+    <mask id="mask-mid" maskUnits="userSpaceOnUse" x="0" y="0" width="250" height="165">
+      <rect width="250" height="165" fill="white" />
+      <use href="#person-interior" fill="black" />
+      <use
+        href="#person-full"
+        stroke="black"
+        stroke-width="18"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </mask>
+
+    <!-- Mask for Back figure (excludes Front and Middle figures) -->
+    <mask id="mask-back" maskUnits="userSpaceOnUse" x="0" y="0" width="250" height="165">
+      <rect width="250" height="165" fill="white" />
+      <use href="#person-interior" fill="black" />
+      <use
+        href="#person-full"
+        stroke="black"
+        stroke-width="18"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <g transform="translate(40, 0)">
+        <use href="#person-interior" fill="black" />
+        <use
+          href="#person-full"
+          stroke="black"
+          stroke-width="19.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </g>
+    </mask>
+  </defs>
+
+  <!-- 3. Back figure (Red) at dx = 80 -->
+  <g mask="url(#mask-back)">
+    <g transform="translate(80, 0)">
+      <use
+        href="#person-half"
+        stroke="#db2a26"
+        stroke-width="18"
+        stroke-linecap="butt"
+        stroke-linejoin="round"
+      />
+      <circle cx="156" cy="148" r="9" fill="#db2a26" />
+    </g>
+  </g>
+
+  <!-- 2. Middle figure (White with Black border) at dx = 40 -->
+  <g mask="url(#mask-mid)">
+    <g transform="translate(40, 0)">
+      <use
+        href="#person-half"
+        stroke="#111111"
+        stroke-width="20.5"
+        stroke-linecap="butt"
+        stroke-linejoin="round"
+      />
+      <circle cx="156" cy="148" r="10.25" fill="#111111" />
+      <use
+        href="#person-half"
+        stroke="#ffffff"
+        stroke-width="15.5"
+        stroke-linecap="butt"
+        stroke-linejoin="round"
+      />
+      <circle cx="156" cy="148" r="7.75" fill="#ffffff" />
+    </g>
+  </g>
+
+  <!-- 1. Front figure (Blue) at dx = 0 -->
+  <use
+    href="#person-full"
+    stroke="#082f77"
+    stroke-width="18"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

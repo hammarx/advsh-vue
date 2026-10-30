@@ -1,0 +1,178 @@
+export const LANGUAGES = [
+  { code: 'de', label: 'DE', name: 'DE – Deutsch', dir: 'ltr' },
+  { code: 'en', label: 'EN', name: 'EN – English', dir: 'ltr' },
+  { code: 'ar', label: 'AR', name: 'AR – العربية', dir: 'rtl' },
+  { code: 'tr', label: 'TR', name: 'TR – Türkçe', dir: 'ltr' },
+  { code: 'ru', label: 'RU', name: 'RU – Русский', dir: 'ltr' },
+  { code: 'pl', label: 'PL', name: 'PL – Polski', dir: 'ltr' },
+]
+
+export const translations = {
+  de: {
+    pageTitle: 'advsh – Antidiskriminierungsverband Schleswig-Holstein',
+    helloWorld: 'Hallo Welt',
+    nav: {
+      skipToContent: 'Zum Inhalt springen',
+      announcement: 'Beratung landesweit · kostenfrei & vertraulich',
+      chooseLanguage: 'Sprache wählen',
+      logoAriaLabel: 'advsh – Antidiskriminierungsverband Schleswig-Holstein – Startseite',
+      logoSubtitle: ['Antidiskriminierungs\u00ADverband', 'Schleswig-Holstein'],
+      menu: 'Menü',
+      menuAriaLabel: 'Menü öffnen oder schließen',
+      mainNavAriaLabel: 'Hauptnavigation',
+      items: [
+        { key: 'counseling', label: 'Beratung', href: '#beratung' },
+        { key: 'projects', label: 'Projekte', href: '#projekte' },
+        { key: 'about', label: 'Über uns', href: '#ueber-uns' },
+        { key: 'news', label: 'Aktuelles', href: '#aktuelles' },
+        { key: 'archive', label: 'Archiv', href: '#archiv' },
+        { key: 'contact', label: 'Kontakt', href: '#kontakt' },
+      ],
+      cta: {
+        label: 'Beratung anfragen',
+        href: '#kontakt',
+        arrow: '↗',
+      },
+    },
+  },
+
+  en: {
+    pageTitle: 'advsh – English',
+    helloWorld: 'Hello world',
+    nav: {
+      skipToContent: 'Skip to content',
+      announcement: 'Counseling across Schleswig-Holstein · free & confidential',
+      chooseLanguage: 'Choose language',
+      logoAriaLabel: 'advsh – Anti-discrimination association Schleswig-Holstein',
+      logoSubtitle: ['Anti-discrimination', 'association Schleswig-Holstein'],
+      menu: 'Menu',
+      menuAriaLabel: 'Menu',
+      mainNavAriaLabel: 'Main navigation',
+      items: [
+        { key: 'counseling', label: 'Counseling', href: '#beratung' },
+        { key: 'projects', label: 'Projects', href: '#projekte' },
+        { key: 'about', label: 'About us', href: '#ueber-uns' },
+        { key: 'news', label: 'News', href: '#aktuelles' },
+        { key: 'archive', label: 'Archive', href: '#archiv' },
+        { key: 'contact', label: 'Contact', href: '#kontakt' },
+      ],
+      cta: {
+        label: 'Request counseling',
+        href: '#kontakt',
+        arrow: '↗',
+      },
+    },
+  },
+
+  ar: {
+    pageTitle: 'advsh – العربية',
+    helloWorld: 'مرحبا بالعالم',
+    nav: {
+      skipToContent: 'الانتقال إلى المحتوى',
+      announcement: 'استشارات في جميع أنحاء شليسفيغ-هولشتاين · مجانية وسرية',
+      chooseLanguage: 'اختر اللغة',
+      logoAriaLabel: 'advsh – رابطة مكافحة التمييز شليسفيغ-هولشتاين',
+      logoSubtitle: ['رابطة مكافحة التمييز', 'شليسفيغ-هولشتاين'],
+      menu: 'القائمة',
+      menuAriaLabel: 'القائمة',
+      mainNavAriaLabel: 'التنقل الرئيسي',
+      items: [
+        { key: 'counseling', label: 'استشارة', href: '#beratung' },
+        { key: 'projects', label: 'المشاريع', href: '#projekte' },
+        { key: 'about', label: 'من نحن', href: '#ueber-uns' },
+        { key: 'news', label: 'الأخبار', href: '#aktuelles' },
+        { key: 'archive', label: 'الأرشيف', href: '#archiv' },
+        { key: 'contact', label: 'اتصل بنا', href: '#kontakt' },
+      ],
+      cta: {
+        label: 'اطلب استشارة',
+        href: '#kontakt',
+        arrow: '↗',
+      },
+    },
+  },
+
+  tr: {
+    pageTitle: 'advsh – Türkçe',
+    helloWorld: 'Merhaba Dünya',
+    nav: {
+      skipToContent: 'İçeriğe geç',
+      announcement: 'Schleswig-Holstein genelinde danışmanlık · ücretsiz ve gizli',
+      chooseLanguage: 'Dil seçin',
+      logoAriaLabel: 'advsh – Ayrımcılıkla Mücadele Derneği Schleswig-Holstein',
+      logoSubtitle: ['Ayrımcılıkla Mücadele', 'Derneği Schleswig-Holstein'],
+      menu: 'Menü',
+      menuAriaLabel: 'Menü',
+      mainNavAriaLabel: 'Ana gezinme',
+      items: [
+        { key: 'counseling', label: 'Danışmanlık', href: '#beratung' },
+        { key: 'projects', label: 'Projeler', href: '#projekte' },
+        { key: 'about', label: 'Hakkımızda', href: '#ueber-uns' },
+        { key: 'news', label: 'Haberler', href: '#aktuelles' },
+        { key: 'archive', label: 'Arşiv', href: '#archiv' },
+        { key: 'contact', label: 'İletişim', href: '#kontakt' },
+      ],
+      cta: {
+        label: 'Danışmanlık talep et',
+        href: '#kontakt',
+        arrow: '↗',
+      },
+    },
+  },
+
+  ru: {
+    pageTitle: 'advsh – Русский',
+    helloWorld: 'Привет, мир',
+    nav: {
+      skipToContent: 'Перейти к содержанию',
+      announcement: 'Консультирование по всему Шлезвиг-Гольштейну · бесплатно и конфиденциально',
+      chooseLanguage: 'Выберите язык',
+      logoAriaLabel: 'advsh – Объединение по борьбе с дискриминацией Шлезвиг-Гольштейн',
+      logoSubtitle: ['Объединение по борьбе', 'с дискриминацией'],
+      menu: 'Меню',
+      menuAriaLabel: 'Меню',
+      mainNavAriaLabel: 'Основная навигация',
+      items: [
+        { key: 'counseling', label: 'Консультация', href: '#beratung' },
+        { key: 'projects', label: 'Проекты', href: '#projekte' },
+        { key: 'about', label: 'О нас', href: '#ueber-uns' },
+        { key: 'news', label: 'Новости', href: '#aktuelles' },
+        { key: 'archive', label: 'Архив', href: '#archiv' },
+        { key: 'contact', label: 'Контакты', href: '#kontakt' },
+      ],
+      cta: {
+        label: 'Запросить консультацию',
+        href: '#kontakt',
+        arrow: '↗',
+      },
+    },
+  },
+
+  pl: {
+    pageTitle: 'advsh – Polski',
+    helloWorld: 'Witaj świecie',
+    nav: {
+      skipToContent: 'Przejdź do treści',
+      announcement: 'Doradztwo w całym Szlezwiku-Holsztynie · bezpłatnie i poufnie',
+      chooseLanguage: 'Wybierz język',
+      logoAriaLabel: 'advsh – Stowarzyszenie przeciwko dyskryminacji Szlezwik-Holsztyn',
+      logoSubtitle: ['Stowarzyszenie', 'przeciwko dyskryminacji Szlezwik-Holsztyn'],
+      menu: 'Menu',
+      menuAriaLabel: 'Menu',
+      mainNavAriaLabel: 'Nawigacja główna',
+      items: [
+        { key: 'counseling', label: 'Doradztwo', href: '#beratung' },
+        { key: 'projects', label: 'Projekty', href: '#projekte' },
+        { key: 'about', label: 'O nas', href: '#ueber-uns' },
+        { key: 'news', label: 'Aktualności', href: '#aktuelles' },
+        { key: 'archive', label: 'Archiwum', href: '#archiv' },
+        { key: 'contact', label: 'Kontakt', href: '#kontakt' },
+      ],
+      cta: {
+        label: 'Poproś o poradę',
+        href: '#kontakt',
+        arrow: '↗',
+      },
+    },
+  },
+}
