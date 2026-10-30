@@ -24,9 +24,12 @@ const hero = computed(() => props.heroData ?? t.value.hero)
       <div class="hero-copy">
         <p class="label hero-kicker">{{ hero.kicker }}</p>
         <h1>
-          {{ hero.titleLine1 }}<br />
-          {{ hero.titleLine2 }}<br />
-          <em>{{ hero.titleAccent }}</em>
+          <span class="hero-line">{{ hero.titleLine1 }}</span>
+          <span class="hero-line">
+            <span>{{ hero.titleLine2 }}</span>
+            <em v-if="hero.inlineAccent" class="inline-accent">{{ hero.titleAccent }}</em>
+          </span>
+          <span v-if="!hero.inlineAccent" class="hero-line"><em>{{ hero.titleAccent }}</em></span>
         </h1>
         <p class="hero-lede">{{ hero.lede }}</p>
 
@@ -133,17 +136,23 @@ const hero = computed(() => props.heroData ?? t.value.hero)
 
 .hero h1 {
   font-family: var(--display);
-  font-size: clamp(3.5rem, 7.2vw, 7.05rem);
+  font-size: clamp(3.2rem, 5.3vw, 5.35rem);
   font-weight: 500;
-  line-height: .88;
+  line-height: .92;
   letter-spacing: -.055em;
-  overflow-wrap: break-word;
+}
+.hero-line {
+  display: block;
+  white-space: nowrap;
 }
 .hero h1 em {
   position: relative;
   font-style: italic;
   font-weight: 400;
   color: var(--logo-red, #db2a26);
+}
+.hero h1 em.inline-accent {
+  margin-left: .22em;
 }
 .hero h1 em::after {
   content: "";
@@ -157,11 +166,11 @@ const hero = computed(() => props.heroData ?? t.value.hero)
 }
 
 html[lang="ru"] .hero h1 {
-  font-size: clamp(2.8rem, 5.6vw, 5.3rem);
-  letter-spacing: -.02em;
+  font-size: clamp(2.65rem, 4.5vw, 4.55rem);
+  letter-spacing: -.025em;
 }
 html[lang="pl"] .hero h1 {
-  font-size: clamp(3rem, 6.2vw, 6.1rem);
+  font-size: clamp(3rem, 5vw, 5.05rem);
 }
 html[lang="ar"] .hero h1 {
   letter-spacing: 0;
@@ -391,7 +400,10 @@ html[lang="ar"] .hero h1 {
 
 @media (max-width: 1120px) {
   .hero h1 {
-    font-size: clamp(3.3rem, 6.8vw, 5.8rem);
+    font-size: clamp(3rem, 5vw, 4.8rem);
+  }
+  html[lang="ru"] .hero h1 {
+    font-size: clamp(2.5rem, 4.3vw, 4.1rem);
   }
 }
 
@@ -401,9 +413,11 @@ html[lang="ar"] .hero h1 {
     gap: 44px;
   }
   .hero h1,
-  html[lang="ru"] .hero h1,
   html[lang="pl"] .hero h1 {
-    font-size: clamp(3.2rem, 9.5vw, 5.5rem);
+    font-size: clamp(2.8rem, 9.5vw, 5.2rem);
+  }
+  html[lang="ru"] .hero h1 {
+    font-size: clamp(2.4rem, 8.2vw, 4.5rem);
   }
   .hero-visual {
     min-height: 0;
@@ -443,10 +457,10 @@ html[lang="ar"] .hero h1 {
   }
   .hero h1,
   html[lang="pl"] .hero h1 {
-    font-size: clamp(2.75rem, 11vw, 4.4rem);
+    font-size: clamp(2.35rem, 9.8vw, 4.2rem);
   }
   html[lang="ru"] .hero h1 {
-    font-size: clamp(2.35rem, 9.2vw, 3.8rem);
+    font-size: clamp(2.05rem, 8.4vw, 3.6rem);
   }
   .hero-lede {
     margin-top: 20px;
@@ -495,10 +509,10 @@ html[lang="ar"] .hero h1 {
   }
   .hero h1,
   html[lang="pl"] .hero h1 {
-    font-size: clamp(2.35rem, 10.5vw, 3.3rem);
+    font-size: clamp(2.1rem, 9.6vw, 3.1rem);
   }
   html[lang="ru"] .hero h1 {
-    font-size: clamp(2.05rem, 8.8vw, 2.9rem);
+    font-size: clamp(1.85rem, 8.2vw, 2.75rem);
   }
   .hero-actions {
     flex-direction: column;
