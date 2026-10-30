@@ -108,10 +108,13 @@ html[lang="ar"] .logo-sub {
   color: var(--cream);
 }
 .logo--footer .logo-mark {
-  height: 54px;
+  height: 50px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--cream);
 }
 .logo--footer .logo-sub {
-  color: rgba(244, 239, 228, .48);
+  color: rgba(244, 239, 228, .62);
   border-color: rgba(244, 239, 228, .22);
 }
 

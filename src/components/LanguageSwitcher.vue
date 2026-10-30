@@ -80,8 +80,9 @@ function selectLanguage(lang) {
   cursor: pointer;
 }
 .lang-switch a:hover {
-  color: var(--cream);
-  border-color: var(--logo-red, #db2a26);
+  color: #ffffff;
+  font-weight: 800;
+  border-color: #ffffff;
 }
 .lang-switch [aria-current="page"] {
   color: var(--cream);
