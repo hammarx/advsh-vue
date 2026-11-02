@@ -11,7 +11,6 @@ export default {
     menuAriaLabel: 'Меню',
     mainNavAriaLabel: 'Основная навигация',
     items: [
-      { key: 'counseling', label: 'Консультация', href: '#beratung' },
       { key: 'projects', label: 'Проекты', href: '#projekte' },
       { key: 'about', label: 'О нас', href: '#ueber-uns' },
       { key: 'news', label: 'Новости', href: '#aktuelles' },
@@ -19,8 +18,8 @@ export default {
       { key: 'contact', label: 'Контакты', href: '#kontakt' },
     ],
     cta: {
-      label: 'Запросить консультацию',
-      href: '#kontakt',
+      label: 'Консультация',
+      href: '/beratung',
       arrow: '↗',
       variant: 'blue',
     },

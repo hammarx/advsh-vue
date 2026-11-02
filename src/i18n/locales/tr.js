@@ -11,7 +11,6 @@ export default {
     menuAriaLabel: 'Menü',
     mainNavAriaLabel: 'Ana gezinme',
     items: [
-      { key: 'counseling', label: 'Danışmanlık', href: '#beratung' },
       { key: 'projects', label: 'Projeler', href: '#projekte' },
       { key: 'about', label: 'Hakkımızda', href: '#ueber-uns' },
       { key: 'news', label: 'Haberler', href: '#aktuelles' },
@@ -19,8 +18,8 @@ export default {
       { key: 'contact', label: 'İletişim', href: '#kontakt' },
     ],
     cta: {
-      label: 'Danışmanlık talep et',
-      href: '#kontakt',
+      label: 'Danışmanlık',
+      href: '/beratung',
       arrow: '↗',
       variant: 'blue',
     },

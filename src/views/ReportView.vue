@@ -2,7 +2,7 @@
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from '@/router'
 import { useSiteStore } from '@/stores/siteStore'
-import { SectionLabel } from '@/components/ui'
+import { SectionLabel, AppBreadcrumb } from '@/components/ui'
 
 const router = useRouter()
 const store = useSiteStore()
@@ -120,7 +120,7 @@ const form = reactive({
   incidentTypes: [],
   witnesses: 'unsure',
   impact: '',
-  mode: 'counseling',
+  mode: 'anonymous',
   name: '',
   email: '',
   phone: '',
@@ -428,10 +428,7 @@ function downloadReceipt() {
 
     <div class="shell">
       <div class="report-top-nav">
-        <button type="button" class="back-btn" @click="goHome">
-          <span class="back-arr" aria-hidden="true">←</span>
-          <span>{{ r.backHome }}</span>
-        </button>
+        <AppBreadcrumb :current="store.nav.reportCta?.label || 'Vorfall melden'" />
 
         <!-- Mobile-friendly one-tap direct call pill right at the top -->
         <a class="quick-call-pill" :href="contact.beaggtivPhoneHref">
@@ -1215,6 +1212,9 @@ function downloadReceipt() {
             </div>
 
             <small class="sidebar-hours">{{ r.sidebar.hours }}</small>
+            <RouterLink to="/beratung" class="sidebar-counsel-btn">
+              Zur Beratung →
+            </RouterLink>
           </div>
 
           <div class="sidebar-card sidebar-card--paper">
@@ -2352,6 +2352,22 @@ input[type="date"].text-input {
   margin-top: 14px;
   color: var(--text-on-dark-muted);
   font-size: 12.5px;
+}
+
+.sidebar-counsel-btn {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--text-on-dark);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sidebar-counsel-btn:hover {
+  color: var(--text-on-dark);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .sidebar-card--paper {

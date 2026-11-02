@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { useRouter } from '@/router'
+
+const props = defineProps({
   href: {
     type: String,
     default: '#',
@@ -21,6 +23,16 @@ defineProps({
     default: false,
   },
 })
+
+const router = useRouter()
+
+function handleClick(e) {
+  if (props.external) return
+  if (props.href.startsWith('/')) {
+    e.preventDefault()
+    router.push(props.href)
+  }
+}
 </script>
 
 <template>
@@ -30,6 +42,7 @@ defineProps({
     :href="href"
     :target="external ? '_blank' : undefined"
     :rel="external ? 'noopener' : undefined"
+    @click="handleClick"
   >
     <slot>{{ label }}</slot>
     <span v-if="arrow" class="arr">{{ typeof arrow === 'string' ? arrow : '↗' }}</span>

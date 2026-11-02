@@ -6,7 +6,7 @@ import logoSvg from '@/assets/advsh-logo.svg'
 const props = defineProps({
   href: {
     type: String,
-    default: '#top',
+    default: '/',
   },
   ariaLabel: {
     type: String,

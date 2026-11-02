@@ -11,7 +11,6 @@ export default {
     menuAriaLabel: 'Menu',
     mainNavAriaLabel: 'Nawigacja główna',
     items: [
-      { key: 'counseling', label: 'Doradztwo', href: '#beratung' },
       { key: 'projects', label: 'Projekty', href: '#projekte' },
       { key: 'about', label: 'O nas', href: '#ueber-uns' },
       { key: 'news', label: 'Aktualności', href: '#aktuelles' },
@@ -19,8 +18,8 @@ export default {
       { key: 'contact', label: 'Kontakt', href: '#kontakt' },
     ],
     cta: {
-      label: 'Poproś o poradę',
-      href: '#kontakt',
+      label: 'Doradztwo',
+      href: '/beratung',
       arrow: '↗',
       variant: 'blue',
     },

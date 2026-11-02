@@ -1,56 +1,118 @@
 import { ref, computed, defineComponent, h } from 'vue'
 import HomeView from '@/views/HomeView.vue'
+import CounselingView from '@/views/CounselingView.vue'
 import ReportView from '@/views/ReportView.vue'
 
-const currentPath = ref(typeof window !== 'undefined' ? window.location.pathname : '/')
-const currentHash = ref(typeof window !== 'undefined' ? window.location.hash : '')
+const HASH_TO_PATH = {
+  '#vorfall-melden': '/vorfall-melden',
+  '#beratung': '/beratung',
+  '#kontakt': '/beratung',
+  '#projekte': '/projekte',
+  '#ueber-uns': '/ueber-uns',
+  '#aktuelles': '/aktuelles',
+  '#archiv': '/archiv',
+  '#top': '/',
+}
 
-// Automatically clean old #vorfall-melden hash to /vorfall-melden path
+function normalizePath(rawPath, rawHash = '') {
+  if (rawHash && HASH_TO_PATH[rawHash]) {
+    return HASH_TO_PATH[rawHash]
+  }
+  if (!rawPath || rawPath === '/index.html') return '/'
+  return rawPath.split('#')[0] || '/'
+}
+
+// Keep a single shared reactive ref on window so Vite HMR updates never split router state
+const initialPath =
+  typeof window !== 'undefined'
+    ? normalizePath(window.location.pathname, window.location.hash)
+    : '/'
+
+export const currentPath =
+  typeof window !== 'undefined'
+    ? (window.__ADVSH_PATH_REF__ ||= ref(initialPath))
+    : ref(initialPath)
+
 if (typeof window !== 'undefined') {
-  if (currentHash.value === '#vorfall-melden') {
-    window.history.replaceState({}, '', '/vorfall-melden')
-    currentPath.value = '/vorfall-melden'
-    currentHash.value = ''
+  currentPath.value = normalizePath(window.location.pathname, window.location.hash)
+}
+
+export function push(target) {
+  if (typeof window === 'undefined') return
+  let raw = typeof target === 'string' ? target : target?.path || '/'
+  let scrollSelector = null
+
+  if (raw.includes('#')) {
+    const [p, hashPart] = raw.split('#')
+    raw = p || '/'
+    if (hashPart === 'anfrage' || hashPart === 'faq') {
+      scrollSelector = `#${hashPart}`
+    } else if (HASH_TO_PATH[`#${hashPart}`]) {
+      raw = HASH_TO_PATH[`#${hashPart}`]
+    }
+  }
+
+  const nextPath = raw || '/'
+  window.history.pushState({}, '', nextPath)
+  currentPath.value = nextPath
+
+  if (scrollSelector) {
+    setTimeout(() => {
+      const el = document.querySelector(scrollSelector)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 60)
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+if (typeof window !== 'undefined' && !window.__ADVSH_ROUTER_BOUND__) {
+  window.__ADVSH_ROUTER_BOUND__ = true
+
+  if (window.location.hash) {
+    const clean = normalizePath(window.location.pathname, window.location.hash)
+    window.history.replaceState({}, '', clean)
+    currentPath.value = clean
   }
 
   window.addEventListener('popstate', () => {
-    currentPath.value = window.location.pathname
-    currentHash.value = window.location.hash
+    const clean = normalizePath(window.location.pathname, window.location.hash)
+    if (window.location.hash) {
+      window.history.replaceState({}, '', clean)
+    }
+    currentPath.value = clean
   })
-}
 
-function push(target) {
-  if (typeof window === 'undefined') return
-  if (typeof target === 'string') {
-    const [pathPart, hashPart] = target.split('#')
-    const nextPath = pathPart || '/'
-    const nextHash = hashPart ? `#${hashPart}` : ''
-    window.history.pushState({}, '', nextPath + nextHash)
-    currentPath.value = nextPath
-    currentHash.value = nextHash
-    if (nextHash) {
-      setTimeout(() => {
-        const el = document.querySelector(nextHash)
-        if (el) el.scrollIntoView({ behavior: 'smooth' })
-      }, 30)
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+  document.addEventListener('click', (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+      return
     }
-  } else if (target && typeof target === 'object') {
-    const nextPath = target.path || '/'
-    const nextHash = target.hash || ''
-    window.history.pushState({}, '', nextPath + nextHash)
-    currentPath.value = nextPath
-    currentHash.value = nextHash
-    if (nextHash) {
-      setTimeout(() => {
-        const el = document.querySelector(nextHash)
-        if (el) el.scrollIntoView({ behavior: 'smooth' })
-      }, 30)
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    const anchor = e.target.closest('a')
+    if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return
+    const href = anchor.getAttribute('href')
+    if (!href || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('http')) {
+      return
     }
-  }
+
+    e.preventDefault()
+
+    if (href === '#anfrage' || href === '#faq') {
+      const targetEl = document.querySelector(href)
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      return
+    }
+
+    if (HASH_TO_PATH[href]) {
+      push(HASH_TO_PATH[href])
+      return
+    }
+
+    if (href.startsWith('/')) {
+      push(href)
+    }
+  })
 }
 
 export function useRouter() {
@@ -60,7 +122,7 @@ export function useRouter() {
 export function useRoute() {
   return computed(() => ({
     path: currentPath.value,
-    hash: currentHash.value,
+    hash: '',
   })).value
 }
 
@@ -70,6 +132,9 @@ export const RouterView = defineComponent({
     return () => {
       if (currentPath.value === '/vorfall-melden') {
         return h(ReportView)
+      }
+      if (currentPath.value === '/beratung' || currentPath.value === '/kontakt') {
+        return h(CounselingView)
       }
       return h(HomeView)
     }
@@ -82,9 +147,10 @@ export const RouterLink = defineComponent({
     to: { type: [String, Object], required: true },
   },
   setup(props, { slots, attrs }) {
-    const href = computed(() =>
-      typeof props.to === 'string' ? props.to : props.to.path || '/'
-    )
+    const href = computed(() => {
+      const raw = typeof props.to === 'string' ? props.to : props.to.path || '/'
+      return raw.split('#')[0] || '/'
+    })
     function onClick(e) {
       e.preventDefault()
       push(props.to)

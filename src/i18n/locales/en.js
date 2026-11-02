@@ -11,7 +11,6 @@ export default {
     menuAriaLabel: 'Menu',
     mainNavAriaLabel: 'Main navigation',
     items: [
-      { key: 'counseling', label: 'Counseling', href: '#beratung' },
       { key: 'projects', label: 'Projects', href: '#projekte' },
       { key: 'about', label: 'About us', href: '#ueber-uns' },
       { key: 'news', label: 'News', href: '#aktuelles' },
@@ -19,8 +18,8 @@ export default {
       { key: 'contact', label: 'Contact', href: '#kontakt' },
     ],
     cta: {
-      label: 'Request counseling',
-      href: '#kontakt',
+      label: 'Counseling',
+      href: '/beratung',
       arrow: '↗',
       variant: 'blue',
     },

@@ -116,7 +116,8 @@ export const useSiteStore = defineStore('site', () => {
   const intro = computed(() => t.value.intro)
   const services = computed(() => t.value.services)
   const feature = computed(() => t.value.feature)
-  const report = computed(() => t.value.report)
+  const counseling = computed(() => t.value.counseling || translations.de.counseling)
+  const report = computed(() => t.value.report || translations.de.report)
   const footer = computed(() => t.value.footer)
 
   // Sync HTML lang/dir/title and CSS Custom Properties
@@ -171,6 +172,7 @@ export const useSiteStore = defineStore('site', () => {
     intro,
     services,
     feature,
+    counseling,
     report,
     footer,
   }

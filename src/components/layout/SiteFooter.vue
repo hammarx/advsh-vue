@@ -23,8 +23,9 @@ const store = useSiteStore()
 function handleFooterLink(link, e) {
   if (link.external) return
   e.preventDefault()
-  store.setActiveHref(link.href)
-  router.push({ path: '/', hash: link.href })
+  const target = link.href.startsWith('#') ? `/${link.href.slice(1)}` : link.href
+  store.setActiveHref(target)
+  router.push(target)
 }
 
 function handleFooterLogo(e) {

@@ -11,7 +11,6 @@ export default {
     menuAriaLabel: 'القائمة',
     mainNavAriaLabel: 'التنقل الرئيسي',
     items: [
-      { key: 'counseling', label: 'استشارة', href: '#beratung' },
       { key: 'projects', label: 'المشاريع', href: '#projekte' },
       { key: 'about', label: 'من نحن', href: '#ueber-uns' },
       { key: 'news', label: 'الأخبار', href: '#aktuelles' },
@@ -19,8 +18,8 @@ export default {
       { key: 'contact', label: 'اتصل بنا', href: '#kontakt' },
     ],
     cta: {
-      label: 'اطلب استشارة',
-      href: '#kontakt',
+      label: 'استشارة',
+      href: '/beratung',
       arrow: '↗',
       variant: 'blue',
     },

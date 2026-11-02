@@ -37,14 +37,12 @@ const resolvedMenuAriaLabel = computed(() => props.menuAriaLabel ?? nav.value.me
 const resolvedNavAriaLabel = computed(() => props.navAriaLabel ?? nav.value.mainNavAriaLabel)
 
 function handleNavClick(item, event) {
-  store.setActiveHref(item.href)
-  if (item.href === '/vorfall-melden' || item.href === '#vorfall-melden') {
-    event.preventDefault()
-    router.push('/vorfall-melden')
-  } else if (item.href.startsWith('#') && route.path !== '/') {
-    event.preventDefault()
-    router.push({ path: '/', hash: item.href })
-  }
+  event.preventDefault()
+  const target = item.href.startsWith('#')
+    ? `/${item.href.slice(1)}`
+    : item.href
+  store.setActiveHref(target)
+  router.push(target)
   emit('navigate', { item, event })
 }
 
@@ -96,15 +94,15 @@ function handleLogoClick(event) {
         </a>
 
         <div class="nav-actions">
-          <a
+          <RouterLink
             v-if="resolvedCta"
             class="nav-cta nav-cta--blue"
-            :href="resolvedCta.href"
-            @click="handleNavClick(resolvedCta, $event)"
+            to="/beratung"
+            @click="store.setActiveHref('/beratung')"
           >
             {{ resolvedCta.label }}
             <span v-if="resolvedCta.arrow" class="arr">{{ resolvedCta.arrow }}</span>
-          </a>
+          </RouterLink>
 
           <RouterLink
             v-if="resolvedReportCta"
