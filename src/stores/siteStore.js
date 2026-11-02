@@ -96,7 +96,7 @@ export const useSiteStore = defineStore('site', () => {
   })
 
   // 4. Navigation & UI State
-  const activeHref = ref(typeof window !== 'undefined' ? window.location.hash : '')
+  const activeHref = ref('')
   const isMobileMenuOpen = ref(false)
 
   function setActiveHref(href) {
@@ -116,6 +116,7 @@ export const useSiteStore = defineStore('site', () => {
   const intro = computed(() => t.value.intro)
   const services = computed(() => t.value.services)
   const feature = computed(() => t.value.feature)
+  const report = computed(() => t.value.report)
   const footer = computed(() => t.value.footer)
 
   // Sync HTML lang/dir/title and CSS Custom Properties
@@ -170,6 +171,7 @@ export const useSiteStore = defineStore('site', () => {
     intro,
     services,
     feature,
+    report,
     footer,
   }
 })

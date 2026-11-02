@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from '@/router'
 import { useSiteStore } from '@/stores/siteStore'
 import BrandLogo from './BrandLogo.vue'
 
@@ -16,7 +17,21 @@ const props = defineProps({
   legalLinks: { type: Array, default: null },
 })
 
+const router = useRouter()
 const store = useSiteStore()
+
+function handleFooterLink(link, e) {
+  if (link.external) return
+  e.preventDefault()
+  store.setActiveHref(link.href)
+  router.push({ path: '/', hash: link.href })
+}
+
+function handleFooterLogo(e) {
+  e.preventDefault()
+  store.clearActiveHref()
+  router.push('/')
+}
 
 const footer = computed(() => store.footer || {})
 const displayDescription = computed(() => props.description ?? footer.value.description)
@@ -40,7 +55,7 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
     <div class="shell">
       <div class="footer-top">
         <div class="footer-brand">
-          <BrandLogo variant="footer" href="#top" :showSubtitle="true" />
+          <BrandLogo variant="footer" href="/" :showSubtitle="true" @click="handleFooterLogo" />
           <p>{{ displayDescription }}</p>
           <a class="footer-mail" :href="`mailto:${displayEmail}`">{{ displayEmail }}</a>
         </div>
@@ -53,6 +68,7 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
             :href="link.href"
             :target="link.external ? '_blank' : undefined"
             :rel="link.external ? 'noopener' : undefined"
+            @click="handleFooterLink(link, $event)"
           >
             {{ link.label }}
           </a>

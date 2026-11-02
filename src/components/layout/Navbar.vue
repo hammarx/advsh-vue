@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter, useRoute } from '@/router'
 import { storeToRefs } from 'pinia'
 import TopBar from './TopBar.vue'
 import BrandLogo from './BrandLogo.vue'
@@ -21,6 +22,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['navigate', 'lang-change'])
+const router = useRouter()
+const route = useRoute()
 const store = useSiteStore()
 const { nav, activeHref: storeActiveHref, isMobileMenuOpen } = storeToRefs(store)
 
@@ -35,11 +38,20 @@ const resolvedNavAriaLabel = computed(() => props.navAriaLabel ?? nav.value.main
 
 function handleNavClick(item, event) {
   store.setActiveHref(item.href)
+  if (item.href === '/vorfall-melden' || item.href === '#vorfall-melden') {
+    event.preventDefault()
+    router.push('/vorfall-melden')
+  } else if (item.href.startsWith('#') && route.path !== '/') {
+    event.preventDefault()
+    router.push({ path: '/', hash: item.href })
+  }
   emit('navigate', { item, event })
 }
 
-function handleLogoClick() {
+function handleLogoClick(event) {
+  if (event) event.preventDefault()
   store.clearActiveHref()
+  router.push('/')
 }
 </script>
 
@@ -94,15 +106,15 @@ function handleLogoClick() {
             <span v-if="resolvedCta.arrow" class="arr">{{ resolvedCta.arrow }}</span>
           </a>
 
-          <a
+          <RouterLink
             v-if="resolvedReportCta"
             class="nav-cta nav-cta--red"
-            :href="resolvedReportCta.href"
-            @click="handleNavClick(resolvedReportCta, $event)"
+            to="/vorfall-melden"
+            @click="store.setActiveHref('/vorfall-melden')"
           >
             {{ resolvedReportCta.label }}
             <span v-if="resolvedReportCta.arrow" class="arr">{{ resolvedReportCta.arrow }}</span>
-          </a>
+          </RouterLink>
         </div>
       </nav>
     </div>
