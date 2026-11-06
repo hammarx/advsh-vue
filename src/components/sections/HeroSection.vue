@@ -1,8 +1,8 @@
 <script setup>
-import { computed } from 'vue'
-import { useSiteStore } from '@/stores/siteStore'
-import { SectionLabel, AppButton, StatList } from '@/components/ui'
-import heroTeamImg from '@/assets/img/hero-team.jpg'
+import { computed } from "vue";
+import { useSiteStore } from "@/stores/siteStore";
+import { SectionLabel, AppButton, StatList } from "@/components/ui";
+import heroTeamImg from "@/assets/img/hero-team.jpg";
 
 const props = defineProps({
   heroData: {
@@ -13,10 +13,10 @@ const props = defineProps({
     type: String,
     default: heroTeamImg,
   },
-})
+});
 
-const store = useSiteStore()
-const hero = computed(() => props.heroData ?? store.hero)
+const store = useSiteStore();
+const hero = computed(() => props.heroData ?? store.hero);
 </script>
 
 <template>
@@ -28,12 +28,15 @@ const hero = computed(() => props.heroData ?? store.hero)
           <span class="hero-line">{{ hero.titleLine1 }}</span>
           <span class="hero-line">
             <span>{{ hero.titleLine2 }}</span>
-            <em v-if="hero.inlineAccent" class="inline-accent">{{ hero.titleAccent }}</em>
+            <em v-if="hero.inlineAccent" class="inline-accent">{{
+              hero.titleAccent
+            }}</em>
           </span>
-          <span v-if="!hero.inlineAccent" class="hero-line"><em>{{ hero.titleAccent }}</em></span>
+          <span v-if="!hero.inlineAccent" class="hero-line"
+            ><em>{{ hero.titleAccent }}</em></span
+          >
         </h1>
         <p class="hero-lede">{{ hero.lede }}</p>
-
         <div class="btn-row hero-actions">
           <AppButton
             v-if="hero.primaryCta"
@@ -104,8 +107,13 @@ const hero = computed(() => props.heroData ?? store.hero)
   width: 175px;
   height: 175px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(16, 32, 31, .18) 1.3px, transparent 1.4px) 0 0 / 13px 13px;
-  opacity: .55;
+  background: radial-gradient(
+      circle,
+      rgba(16, 32, 31, 0.18) 1.3px,
+      transparent 1.4px
+    )
+    0 0 / 13px 13px;
+  opacity: 0.55;
   pointer-events: none;
 }
 
@@ -113,7 +121,7 @@ const hero = computed(() => props.heroData ?? store.hero)
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(0, .94fr);
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
   gap: clamp(34px, 5vw, 72px);
   align-items: center;
 }
@@ -130,8 +138,8 @@ const hero = computed(() => props.heroData ?? store.hero)
   font-family: var(--display);
   font-size: clamp(3.2rem, 5.3vw, 5.35rem);
   font-weight: 500;
-  line-height: .92;
-  letter-spacing: -.055em;
+  line-height: 0.92;
+  letter-spacing: -0.055em;
 }
 .hero-line {
   display: block;
@@ -144,22 +152,22 @@ const hero = computed(() => props.heroData ?? store.hero)
   color: var(--logo-red);
 }
 .hero h1 em.inline-accent {
-  margin-left: .22em;
+  margin-left: 0.22em;
 }
 .hero h1 em::after {
   content: "";
   position: absolute;
   right: 0;
-  bottom: .04em;
+  bottom: 0.04em;
   left: 0;
-  height: .05em;
+  height: 0.05em;
   background: var(--logo-blue);
   z-index: -1;
 }
 
 html[lang="ru"] .hero h1 {
   font-size: clamp(2.65rem, 4.5vw, 4.55rem);
-  letter-spacing: -.025em;
+  letter-spacing: -0.025em;
 }
 html[lang="pl"] .hero h1 {
   font-size: clamp(3rem, 5vw, 5.05rem);
@@ -196,7 +204,7 @@ html[lang="ar"] .hero h1 {
   height: 285px;
   border-radius: 50%;
   background: var(--yellow);
-  opacity: .92;
+  opacity: 0.92;
 }
 .hero-visual::after {
   content: "";
@@ -218,7 +226,7 @@ html[lang="ar"] .hero h1 {
   overflow: hidden;
   border-radius: 230px 230px 22px 22px;
   background: var(--mint);
-  box-shadow: 0 40px 70px -48px rgba(16, 32, 31, .75);
+  box-shadow: 0 40px 70px -48px rgba(16, 32, 31, 0.75);
 }
 [dir="rtl"] .hero-arch {
   margin-left: 0;
@@ -228,14 +236,18 @@ html[lang="ar"] .hero h1 {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(160deg, rgba(13, 92, 80, .06), rgba(16, 32, 31, .18));
+  background: linear-gradient(
+    160deg,
+    rgba(13, 92, 80, 0.06),
+    rgba(16, 32, 31, 0.18)
+  );
   pointer-events: none;
 }
 .hero-arch img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: saturate(.82) contrast(1.03);
+  filter: saturate(0.82) contrast(1.03);
 }
 
 .hero-note {
@@ -248,7 +260,7 @@ html[lang="ar"] .hero h1 {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--paper);
-  box-shadow: 0 22px 40px -28px rgba(16, 32, 31, .5);
+  box-shadow: 0 22px 40px -28px rgba(16, 32, 31, 0.5);
   transform: rotate(-2.5deg);
 }
 [dir="rtl"] .hero-note {
@@ -276,7 +288,7 @@ html[lang="ar"] .hero h1 {
   color: var(--muted);
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -302,9 +314,12 @@ html[lang="ar"] .hero h1 {
   text-align: center;
   text-decoration: none;
   text-transform: uppercase;
-  letter-spacing: .06em;
+  letter-spacing: 0.06em;
   transform: rotate(7deg);
-  transition: transform .3s, background .3s, color .3s;
+  transition:
+    transform 0.3s,
+    background 0.3s,
+    color 0.3s;
 }
 [dir="rtl"] .hero-circle {
   right: auto;
@@ -335,22 +350,22 @@ html[lang="ar"] .hero h1 {
   }
 }
 .hero-copy > * {
-  animation: rise .75s cubic-bezier(.22, 1, .36, 1) both;
+  animation: rise 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .hero-copy > :nth-child(2) {
-  animation-delay: .07s;
+  animation-delay: 0.07s;
 }
 .hero-copy > :nth-child(3) {
-  animation-delay: .14s;
+  animation-delay: 0.14s;
 }
 .hero-copy > :nth-child(4) {
-  animation-delay: .2s;
+  animation-delay: 0.2s;
 }
 .hero-copy > :nth-child(5) {
-  animation-delay: .26s;
+  animation-delay: 0.26s;
 }
 .hero-visual {
-  animation: rise .9s .12s cubic-bezier(.22, 1, .36, 1) both;
+  animation: rise 0.9s 0.12s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @media (max-width: 1120px) {
@@ -494,7 +509,7 @@ html[lang="ar"] .hero h1 {
   }
   .hero-fact span {
     font-size: 8.5px;
-    letter-spacing: .08em;
+    letter-spacing: 0.08em;
   }
   .hero-visual::before {
     width: 190px;

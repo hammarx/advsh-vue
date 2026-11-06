@@ -1,418 +1,866 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from '@/router'
-import { useSiteStore } from '@/stores/siteStore'
-import { SectionLabel, AppBreadcrumb } from '@/components/ui'
+import {
+  ref,
+  reactive,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+} from "vue";
+import { useRouter } from "@/router";
+import { useSiteStore } from "@/stores/siteStore";
+import { SectionLabel, AppBreadcrumb } from "@/components/ui";
 
-const router = useRouter()
-const store = useSiteStore()
-const r = computed(() => store.report)
-const contact = computed(() => store.contact)
-const lang = computed(() => store.currentLang)
+const router = useRouter();
+const store = useSiteStore();
+const r = computed(() => store.report);
+const contact = computed(() => store.contact);
+const lang = computed(() => store.currentLang);
+
+// Canonical slugs used by the WordPress plugin. The localized labels are
+// mapped by their index to these values so translated display text never
+// reaches the API.
+const AREA_SLUGS = [
+  "arbeit",
+  "wohnen",
+  "behoerde",
+  "behoerde",
+  "bildung",
+  "behoerde",
+  "oeffentlichkeit",
+  "oeffentlichkeit",
+  "digital",
+  "sonstiges",
+];
+
+const RACISM_SLUGS = [
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "angriffe",
+  "sonstiges",
+];
+
+const INCIDENT_SLUGS = [
+  "angriffe",
+  "institutionell",
+  "institutionell",
+  "angriffe",
+  "gewalt",
+  "propaganda",
+  "propaganda",
+  "sonstiges",
+];
+
+const REGION_SLUGS = [
+  "kiel",
+  "luebeck",
+  "flensburg",
+  "neumuenster",
+  "kreis-dithmarschen",
+  "kreis-herzogtum-lauenburg",
+  "kreis-nordfriesland",
+  "kreis-ostholstein",
+  "kreis-pinneberg",
+  "kreis-ploen",
+  "kreis-rendsburg-eckernfoerde",
+  "kreis-schleswig-flensburg",
+  "kreis-segeberg",
+  "kreis-steinburg",
+  "kreis-stormarn",
+  "online",
+  "ausserhalb-sh",
+];
+
+function labelToSlug(label, options, slugs) {
+  if (!Array.isArray(options) || !Array.isArray(slugs)) return "";
+  const index = options.indexOf(label);
+  return index >= 0 && slugs[index] ? slugs[index] : "";
+}
+
+function labelsToSlugs(labels, options, slugs) {
+  if (!Array.isArray(labels)) return [];
+  return [
+    ...new Set(
+      labels
+        .map((label) => labelToSlug(label, options, slugs))
+        .filter(Boolean),
+    ),
+  ];
+}
+
+function wordCount(value) {
+  const text = String(value || "").trim();
+  if (!text) return 0;
+  return text.split(/\s+/u).filter(Boolean).length;
+}
+
+function normalizeTimeInput(value) {
+  let raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+
+  // Accept locale suffixes such as "14:30 Uhr", "14:30 saat",
+  // "godz. 14:30", "14:30 час" and the Arabic word for "hour".
+  raw = raw
+    .replace(/\b(?:uhr|saat|godz|godzina)\b\.?/gu, " ")
+    .replace(/час(?:а|ов)?/gu, " ")
+    .replace(/الساعة/gu, " ")
+    .replace(/^[\s.,;:]+|[\s.,;:]+$/gu, "")
+    .replace(/\s+/gu, " ")
+    .trim();
+
+  // 2:30 PM, 2.30 pm, 2 pm
+  let match = /^(\d{1,2})(?:[:.](\d{1,2}))?\s*(am|pm|a\.m\.|p\.m\.)$/u.exec(
+    raw,
+  );
+  if (match) {
+    let hours = Number.parseInt(match[1], 10);
+    const minutes = match[2] ? Number.parseInt(match[2], 10) : 0;
+    const isPm = match[3].replace(/\./gu, "") === "pm";
+
+    if (hours < 1 || hours > 12 || minutes > 59) return "";
+    if (isPm && hours < 12) hours += 12;
+    if (!isPm && hours === 12) hours = 0;
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  }
+
+  // 14:30, 9:30, 14.30, 9.30
+  match = /^(\d{1,2})[:.](\d{1,2})$/u.exec(raw);
+  if (!match) return "";
+
+  const hours = Number.parseInt(match[1], 10);
+  const minutes = Number.parseInt(match[2], 10);
+  if (hours > 23 || minutes > 59) return "";
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
 
 // Localized mobile UX helpers (Quick-Date, Bottom-Sheet Actions, Writing Prompts, Progress)
 const mobileUi = computed(() => {
   const map = {
     de: {
-      today: 'Heute',
-      yesterday: 'Gestern',
-      done: 'Auswahl übernehmen',
-      clear: 'Alle löschen',
-      selectedCount: 'ausgewählt',
-      quickCall: 'Lieber direkt sprechen? Jetzt anrufen:',
-      stepTitles: ['01 Ort & Zeit', '02 Schilderung', '03 Einordnung', '04 Absenden'],
-      promptHint: 'Tipp fürs Smartphone: Tippen Sie auf eine Frage, um sie als Schreibhilfe einzufügen:',
+      today: "Heute",
+      yesterday: "Gestern",
+      done: "Auswahl übernehmen",
+      clear: "Alle löschen",
+      selectedCount: "ausgewählt",
+      quickCall: "Lieber direkt sprechen? Jetzt anrufen:",
+      stepTitles: [
+        "01 Ort & Zeit",
+        "02 Schilderung",
+        "03 Einordnung",
+        "04 Absenden",
+      ],
+      promptHint:
+        "Tipp fürs Smartphone: Tippen Sie auf eine Frage, um sie als Schreibhilfe einzufügen:",
       prompts: [
-        { label: '+ Was ist passiert?', text: 'Was ist passiert: ' },
-        { label: '+ Was wurde gesagt/getan?', text: 'Was genau gesagt oder getan wurde: ' },
-        { label: '+ Wer war beteiligt?', text: 'Beteiligte Personen / Stelle: ' },
+        { label: "+ Was ist passiert?", text: "Was ist passiert: " },
+        {
+          label: "+ Was wurde gesagt/getan?",
+          text: "Was genau gesagt oder getan wurde: ",
+        },
+        {
+          label: "+ Wer war beteiligt?",
+          text: "Beteiligte Personen / Stelle: ",
+        },
       ],
     },
     en: {
-      today: 'Today',
-      yesterday: 'Yesterday',
-      done: 'Apply selection',
-      clear: 'Clear all',
-      selectedCount: 'selected',
-      quickCall: 'Prefer to talk directly? Call us:',
-      stepTitles: ['01 Time & Place', '02 Description', '03 Category', '04 Submit'],
-      promptHint: 'Mobile tip: Tap a question below to insert it as a writing guide:',
+      today: "Today",
+      yesterday: "Yesterday",
+      done: "Apply selection",
+      clear: "Clear all",
+      selectedCount: "selected",
+      quickCall: "Prefer to talk directly? Call us:",
+      stepTitles: [
+        "01 Time & Place",
+        "02 Description",
+        "03 Category",
+        "04 Submit",
+      ],
+      promptHint:
+        "Mobile tip: Tap a question below to insert it as a writing guide:",
       prompts: [
-        { label: '+ What happened?', text: 'What happened: ' },
-        { label: '+ What was said/done?', text: 'What was said or done: ' },
-        { label: '+ Who was involved?', text: 'People / institution involved: ' },
+        { label: "+ What happened?", text: "What happened: " },
+        { label: "+ What was said/done?", text: "What was said or done: " },
+        {
+          label: "+ Who was involved?",
+          text: "People / institution involved: ",
+        },
       ],
     },
     ar: {
-      today: 'اليوم',
-      yesterday: 'أمس',
-      done: 'تأكيد الاختيار',
-      clear: 'مسح الكل',
-      selectedCount: 'محدد',
-      quickCall: 'تفضّل التحدث مباشرة؟ اتصل بنا:',
-      stepTitles: ['01 الزمان والمكان', '02 الوصف', '03 التصنيف', '04 الإرسال'],
-      promptHint: 'نصيحة للهاتف: اضغط على أحد الأسئلة لإضافته كمساعدة في الكتابة:',
+      today: "اليوم",
+      yesterday: "أمس",
+      done: "تأكيد الاختيار",
+      clear: "مسح الكل",
+      selectedCount: "محدد",
+      quickCall: "تفضّل التحدث مباشرة؟ اتصل بنا:",
+      stepTitles: ["01 الزمان والمكان", "02 الوصف", "03 التصنيف", "04 الإرسال"],
+      promptHint:
+        "نصيحة للهاتف: اضغط على أحد الأسئلة لإضافته كمساعدة في الكتابة:",
       prompts: [
-        { label: '+ ماذا حدث؟', text: 'ماذا حدث: ' },
-        { label: '+ ماذا قيل أو فُعل؟', text: 'ما قيل أو فُعل بالضبط: ' },
-        { label: '+ من كان طرفًا؟', text: 'الأشخاص أو الجهة المعنية: ' },
+        { label: "+ ماذا حدث؟", text: "ماذا حدث: " },
+        { label: "+ ماذا قيل أو فُعل؟", text: "ما قيل أو فُعل بالضبط: " },
+        { label: "+ من كان طرفًا؟", text: "الأشخاص أو الجهة المعنية: " },
       ],
     },
     tr: {
-      today: 'Bugün',
-      yesterday: 'Dün',
-      done: 'Seçimi onayla',
-      clear: 'Tümünü temizle',
-      selectedCount: 'seçildi',
-      quickCall: 'Doğrudan konuşmak ister misiniz? Hemen arayın:',
-      stepTitles: ['01 Yer ve Zaman', '02 Anlatım', '03 Sınıflandırma', '04 Gönder'],
-      promptHint: 'Telefon ipucu: Yazım yardımcısı olarak eklemek için bir soruya dokunun:',
+      today: "Bugün",
+      yesterday: "Dün",
+      done: "Seçimi onayla",
+      clear: "Tümünü temizle",
+      selectedCount: "seçildi",
+      quickCall: "Doğrudan konuşmak ister misiniz? Hemen arayın:",
+      stepTitles: [
+        "01 Yer ve Zaman",
+        "02 Anlatım",
+        "03 Sınıflandırma",
+        "04 Gönder",
+      ],
+      promptHint:
+        "Telefon ipucu: Yazım yardımcısı olarak eklemek için bir soruya dokunun:",
       prompts: [
-        { label: '+ Ne oldu?', text: 'Ne oldu: ' },
-        { label: '+ Ne söylendi/yapıldı?', text: 'Tam olarak ne söylendi veya yapıldı: ' },
-        { label: '+ Kimler dahildi?', text: 'İlgili kişiler / kurum: ' },
+        { label: "+ Ne oldu?", text: "Ne oldu: " },
+        {
+          label: "+ Ne söylendi/yapıldı?",
+          text: "Tam olarak ne söylendi veya yapıldı: ",
+        },
+        { label: "+ Kimler dahildi?", text: "İlgili kişiler / kurum: " },
       ],
     },
     ru: {
-      today: 'Сегодня',
-      yesterday: 'Вчера',
-      done: 'Готово',
-      clear: 'Сбросить',
-      selectedCount: 'выбрано',
-      quickCall: 'Предпочитаете поговорить лично? Позвоните нам:',
-      stepTitles: ['01 Место и время', '02 Описание', '03 Категории', '04 Отправка'],
-      promptHint: 'Подсказка: нажмите на вопрос ниже, чтобы вставить его в поле описания:',
+      today: "Сегодня",
+      yesterday: "Вчера",
+      done: "Готово",
+      clear: "Сбросить",
+      selectedCount: "выбрано",
+      quickCall: "Предпочитаете поговорить лично? Позвоните нам:",
+      stepTitles: [
+        "01 Место и время",
+        "02 Описание",
+        "03 Категории",
+        "04 Отправка",
+      ],
+      promptHint:
+        "Подсказка: нажмите на вопрос ниже, чтобы вставить его в поле описания:",
       prompts: [
-        { label: '+ Что произошло?', text: 'Что произошло: ' },
-        { label: '+ Что было сказано/сделано?', text: 'Что именно было сказано или сделано: ' },
-        { label: '+ Кто участвовал?', text: 'Участники / организация: ' },
+        { label: "+ Что произошло?", text: "Что произошло: " },
+        {
+          label: "+ Что было сказано/сделано?",
+          text: "Что именно было сказано или сделано: ",
+        },
+        { label: "+ Кто участвовал?", text: "Участники / организация: " },
       ],
     },
     pl: {
-      today: 'Dzisiaj',
-      yesterday: 'Wczoraj',
-      done: 'Zatwierdź wybór',
-      clear: 'Wyczyść',
-      selectedCount: 'wybrano',
-      quickCall: 'Wolisz porozmawiać? Zadzwoń do nas:',
-      stepTitles: ['01 Czas i miejsce', '02 Opis', '03 Kategoria', '04 Wyślij'],
-      promptHint: 'Wskazówka na telefon: dotknij pytania, aby wstawić je jako podpowiedź:',
+      today: "Dzisiaj",
+      yesterday: "Wczoraj",
+      done: "Zatwierdź wybór",
+      clear: "Wyczyść",
+      selectedCount: "wybrano",
+      quickCall: "Wolisz porozmawiać? Zadzwoń do nas:",
+      stepTitles: ["01 Czas i miejsce", "02 Opis", "03 Kategoria", "04 Wyślij"],
+      promptHint:
+        "Wskazówka na telefon: dotknij pytania, aby wstawić je jako podpowiedź:",
       prompts: [
-        { label: '+ Co się stało?', text: 'Co się wydarzyło: ' },
-        { label: '+ Co powiedziano/zrobiono?', text: 'Co dokładnie powiedziano lub zrobiono: ' },
-        { label: '+ Kto brał udział?', text: 'Osoby / instytucja: ' },
+        { label: "+ Co się stało?", text: "Co się wydarzyło: " },
+        {
+          label: "+ Co powiedziano/zrobiono?",
+          text: "Co dokładnie powiedziano lub zrobiono: ",
+        },
+        { label: "+ Kto brał udział?", text: "Osoby / instytucja: " },
       ],
     },
-  }
-  return map[lang.value] || map.de
-})
+  };
+  return map[lang.value] || map.de;
+});
 
 const form = reactive({
-  reporterRole: 'affected',
-  date: '',
-  time: '',
+  reporterRole: "affected",
+  date: "",
+  time: "",
   ongoing: false,
-  district: '',
-  locationDetail: '',
+  district: "",
+  locationDetail: "",
   areas: [],
-  description: '',
+  areaSonstiges: "",
+  description: "",
   racismTypes: [],
   incidentTypes: [],
-  witnesses: 'unsure',
-  impact: '',
-  mode: 'anonymous',
-  name: '',
-  email: '',
-  phone: '',
-  preferredLang: '',
-  preferredContact: 'email',
+  manifestationSonstiges: "",
+  witnesses: "unsure",
+  impact: "",
+  mode: "anonymous",
+  name: "",
+  email: "",
+  phone: "",
+  preferredLang: "",
+  preferredContact: "email",
   consent: false,
-})
+});
 
 // Quick Date Helpers for Mobile
 function formatIsoDate(dateObj) {
-  const y = dateObj.getFullYear()
-  const m = String(dateObj.getMonth() + 1).padStart(2, '0')
-  const d = String(dateObj.getDate()).padStart(2, '0')
-  return `${y}-${m}-${d}`
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const d = String(dateObj.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-const todayIso = computed(() => formatIsoDate(new Date()))
+const todayIso = computed(() => formatIsoDate(new Date()));
 const yesterdayIso = computed(() => {
-  const d = new Date()
-  d.setDate(d.getDate() - 1)
-  return formatIsoDate(d)
-})
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return formatIsoDate(d);
+});
 
 function setQuickDate(type) {
-  form.ongoing = false
-  if (type === 'today') {
-    form.date = todayIso.value
-  } else if (type === 'yesterday') {
-    form.date = yesterdayIso.value
+  form.ongoing = false;
+  if (type === "today") {
+    form.date = todayIso.value;
+  } else if (type === "yesterday") {
+    form.date = yesterdayIso.value;
   }
 }
 
 // Insert writing prompt into description textarea
-const descriptionInputRef = ref(null)
+const descriptionInputRef = ref(null);
 function insertPrompt(promptText) {
   if (!form.description.trim()) {
-    form.description = promptText
+    form.description = promptText;
   } else if (!form.description.includes(promptText)) {
-    form.description = `${form.description.trimEnd()}\n\n${promptText}`
+    form.description = `${form.description.trimEnd()}\n\n${promptText}`;
   }
   if (descriptionInputRef.value) {
-    descriptionInputRef.value.focus()
+    descriptionInputRef.value.focus();
   }
 }
+
+const areaSlugs = computed(() =>
+  labelsToSlugs(form.areas, r.value.sections.areas, AREA_SLUGS),
+);
+const racismSlugs = computed(() =>
+  labelsToSlugs(form.racismTypes, r.value.sections.racismTypes, RACISM_SLUGS),
+);
+const incidentSlugs = computed(() =>
+  labelsToSlugs(
+    form.incidentTypes,
+    r.value.sections.incidentTypes,
+    INCIDENT_SLUGS,
+  ),
+);
+const manifestationSlug = computed(
+  () => incidentSlugs.value[0] || racismSlugs.value[0] || "",
+);
+const showAreaSonstiges = computed(() =>
+  areaSlugs.value.includes("sonstiges"),
+);
+const showManifestationSonstiges = computed(
+  () => manifestationSlug.value === "sonstiges",
+);
+const areaSonstigesWordCount = computed(() => wordCount(form.areaSonstiges));
+const manifestationSonstigesWordCount = computed(() =>
+  wordCount(form.manifestationSonstiges),
+);
 
 // Section Completion Indicators for Progress Bar
 const sectionDone = computed(() => ({
   s1: Boolean(form.district),
-  s2: Boolean(form.description.trim()),
-  s3: Boolean(form.racismTypes.length || form.incidentTypes.length),
+  s2:
+    Boolean(form.areas.length) &&
+    Boolean(form.description.trim()) &&
+    (!showAreaSonstiges.value || Boolean(form.areaSonstiges.trim())),
+  s3:
+    Boolean(form.racismTypes.length || form.incidentTypes.length) &&
+    (!showManifestationSonstiges.value ||
+      Boolean(form.manifestationSonstiges.trim())),
   s4:
     Boolean(form.consent) &&
-    (form.mode === 'anonymous' || (Boolean(form.email.trim()) && form.email.includes('@'))),
-}))
+    (form.mode === "anonymous" ||
+      (Boolean(form.email.trim()) && form.email.includes("@"))),
+}));
 
 const completionPercent = computed(() => {
-  const vals = Object.values(sectionDone.value)
-  const doneCount = vals.filter(Boolean).length
-  return Math.round((doneCount / vals.length) * 100)
-})
+  const vals = Object.values(sectionDone.value);
+  const doneCount = vals.filter(Boolean).length;
+  return Math.round((doneCount / vals.length) * 100);
+});
 
 function scrollToSection(id) {
-  const el = document.getElementById(id)
+  const el = document.getElementById(id);
   if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 }
 
 // Custom Dropdown State ('role' | 'district' | 'areas' | 'racism' | 'incident' | 'witnesses' | 'contact' | null)
-const openDropdown = ref(null)
+const openDropdown = ref(null);
 
 function toggleDropdown(name) {
-  openDropdown.value = openDropdown.value === name ? null : name
+  openDropdown.value = openDropdown.value === name ? null : name;
 }
 
 function closeDropdown() {
-  openDropdown.value = null
+  openDropdown.value = null;
 }
 
 function handleOutsideClick(e) {
-  if (!e.target.closest('.custom-dd') && !e.target.closest('.dd-backdrop')) {
-    openDropdown.value = null
+  if (!e.target.closest(".custom-dd") && !e.target.closest(".dd-backdrop")) {
+    openDropdown.value = null;
   }
 }
 
 function handleKeydown(e) {
-  if (e.key === 'Escape' && openDropdown.value) {
-    openDropdown.value = null
+  if (e.key === "Escape" && openDropdown.value) {
+    openDropdown.value = null;
   }
 }
 
 // Lock body scroll on mobile when a bottom-sheet dropdown is open
 watch(openDropdown, (val) => {
-  if (typeof document === 'undefined' || typeof window === 'undefined') return
+  if (typeof document === "undefined" || typeof window === "undefined") return;
   if (val && window.innerWidth <= 860) {
-    document.body.style.overflow = 'hidden'
+    document.body.style.overflow = "hidden";
   } else {
-    document.body.style.overflow = ''
+    document.body.style.overflow = "";
   }
-})
+});
 
 onMounted(() => {
-  if (typeof document !== 'undefined') {
-    document.addEventListener('click', handleOutsideClick)
-    document.addEventListener('keydown', handleKeydown)
+  if (typeof document !== "undefined") {
+    document.addEventListener("click", handleOutsideClick);
+    document.addEventListener("keydown", handleKeydown);
   }
-})
+});
 
 onBeforeUnmount(() => {
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('click', handleOutsideClick)
-    document.removeEventListener('keydown', handleKeydown)
-    document.body.style.overflow = ''
+  if (typeof document !== "undefined") {
+    document.removeEventListener("click", handleOutsideClick);
+    document.removeEventListener("keydown", handleKeydown);
+    document.body.style.overflow = "";
   }
-})
+});
 
-const showValidationError = ref(false)
-const isSubmitted = ref(false)
-const referenceId = ref('')
+const showValidationError = ref(false);
+const isSubmitted = ref(false);
+const referenceId = ref("");
+
+const submitting = ref(false);
+const serverError = ref("");
 
 function toggleArrayItem(arr, item) {
-  const idx = arr.indexOf(item)
+  const idx = arr.indexOf(item);
   if (idx === -1) {
-    arr.push(item)
+    arr.push(item);
   } else {
-    arr.splice(idx, 1)
+    arr.splice(idx, 1);
   }
 }
 
 function clearArray(arr) {
-  arr.splice(0, arr.length)
+  arr.splice(0, arr.length);
 }
 
 function selectSingle(field, value) {
-  form[field] = value
-  openDropdown.value = null
+  form[field] = value;
+  openDropdown.value = null;
 }
 
 const selectedRoleOption = computed(
   () =>
     r.value.sections.reporterOptions.find((o) => o.id === form.reporterRole) ||
-    r.value.sections.reporterOptions[0]
-)
+    r.value.sections.reporterOptions[0],
+);
 
 const selectedWitnessOption = computed(
   () =>
     r.value.sections.witnessOptions.find((o) => o.id === form.witnesses) ||
-    r.value.sections.witnessOptions[2]
-)
+    r.value.sections.witnessOptions[2],
+);
 
 const selectedContactOption = computed(
   () =>
-    r.value.sections.preferredContactOptions.find((o) => o.id === form.preferredContact) ||
-    r.value.sections.preferredContactOptions[0]
-)
+    r.value.sections.preferredContactOptions.find(
+      (o) => o.id === form.preferredContact,
+    ) || r.value.sections.preferredContactOptions[0],
+);
 
 function formatMultiSummary(items, placeholder) {
-  if (!items.length) return placeholder
-  if (items.length === 1) return items[0]
-  return `${items[0]} (+${items.length - 1})`
+  if (!items.length) return placeholder;
+  if (items.length === 1) return items[0];
+  return `${items[0]} (+${items.length - 1})`;
 }
 
-const isDistrictInvalid = computed(() => showValidationError.value && !form.district)
+const isDistrictInvalid = computed(
+  () => showValidationError.value && !form.district,
+);
 const isDescriptionInvalid = computed(
-  () => showValidationError.value && !form.description.trim()
-)
+  () => showValidationError.value && !form.description.trim(),
+);
 const isEmailInvalid = computed(
   () =>
     showValidationError.value &&
-    form.mode === 'counseling' &&
-    (!form.email.trim() || !form.email.includes('@'))
-)
-const isConsentInvalid = computed(() => showValidationError.value && !form.consent)
+    form.mode === "counseling" &&
+    (!form.email.trim() || !form.email.includes("@")),
+);
+const isConsentInvalid = computed(
+  () => showValidationError.value && !form.consent,
+);
+const isAreasInvalid = computed(
+  () => showValidationError.value && form.areas.length === 0,
+);
+const isDatumInvalid = computed(() => showValidationError.value && !form.date);
+const isBeschreibungInvalid = computed(() =>
+  showValidationError.value &&
+  form.description.trim().length > 0 &&
+  form.description.trim().length < 20,
+);
+const isManifestInvalid = computed(
+  () =>
+    showValidationError.value &&
+    form.racismTypes.length === 0 &&
+    form.incidentTypes.length === 0,
+);
+const normalizedTime = computed(() => normalizeTimeInput(form.time));
+const isUhrzeitInvalid = computed(() => {
+  const raw = String(form.time || "").trim();
+  if (!showValidationError.value || !raw) return false;
+  // Vague entries such as "nachmittags" are allowed; only entered numeric
+  // time text has to be a valid time.
+  if (!/\d/u.test(raw)) return false;
+  return !normalizedTime.value;
+});
+const isAreaSonstigesInvalid = computed(
+  () =>
+    showValidationError.value &&
+    showAreaSonstiges.value &&
+    (!form.areaSonstiges.trim() || areaSonstigesWordCount.value > 100),
+);
+const isManifestationSonstigesInvalid = computed(
+  () =>
+    showValidationError.value &&
+    showManifestationSonstiges.value &&
+    (!form.manifestationSonstiges.trim() ||
+      manifestationSonstigesWordCount.value > 100),
+);
+const sonstigesValidationMessage = computed(() => {
+  const sections = r.value.sections;
+  if (
+    areaSonstigesWordCount.value > 100 ||
+    manifestationSonstigesWordCount.value > 100
+  ) {
+    return sections.validationSonstigesWordsError;
+  }
+  return sections.validationSonstigesError;
+});
+
+const validationMessage = computed(() => {
+  const sections = r.value.sections;
+  if (isAreasInvalid.value) return sections.validationAreasError;
+  if (isAreaSonstigesInvalid.value) return sonstigesValidationMessage.value;
+  if (isDatumInvalid.value) return sections.validationDateError;
+  if (isBeschreibungInvalid.value) return sections.validationBeschreibungError;
+  if (isManifestInvalid.value) return sections.validationManifestError;
+  if (isManifestationSonstigesInvalid.value)
+    return sonstigesValidationMessage.value;
+  if (isUhrzeitInvalid.value) return sections.validationUhrzeitError;
+  return sections.validationError;
+});
 
 function generateRefId() {
-  const year = new Date().getFullYear()
-  const rand = Math.floor(1000 + Math.random() * 9000)
-  return `ADVSH-${year}-${rand}`
+  const year = new Date().getFullYear();
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `ADVSH-${year}-${rand}`;
 }
 
-function handleSubmit() {
-  showValidationError.value = true
+function buildApiPayload() {
+  const sections = r.value.sections;
+  const areas = Array.isArray(form.areas) ? [...form.areas] : [];
+  const racismTypes = Array.isArray(form.racismTypes) ? [...form.racismTypes] : [];
+  const incidentTypes = Array.isArray(form.incidentTypes) ? [...form.incidentTypes] : [];
 
-  const validDistrict = Boolean(form.district)
-  const validDesc = Boolean(form.description.trim())
+  const areaSlugValues = labelsToSlugs(areas, sections.areas, AREA_SLUGS);
+  const racismSlugValues = labelsToSlugs(
+    racismTypes,
+    sections.racismTypes,
+    RACISM_SLUGS,
+  );
+  const incidentSlugValues = labelsToSlugs(
+    incidentTypes,
+    sections.incidentTypes,
+    INCIDENT_SLUGS,
+  );
+
+  const roleValue = String(form.reporterRole || "affected").toLowerCase();
+  let rolle = "selbst";
+  if (
+    ["witness", "zeuge", "beobachtung", "observation", "beobachten", "witnessed"].includes(
+      roleValue,
+    )
+  ) {
+    rolle = "zeuge";
+  } else if (
+    [
+      "third_party",
+      "representation",
+      "vertretung",
+      "vertret",
+      "beaufsichtigung",
+      "beaufsichtige",
+      "vertretende",
+    ].includes(roleValue)
+  ) {
+    rolle = "vertretung";
+  }
+
+  const manifestation =
+    incidentSlugValues[0] || racismSlugValues[0] || "";
+
+  // The new form does not collect a separate offender profile. Infer the
+  // closest server value from the selected areas instead of sending a label.
+  let taeter = "privat";
+  if (areaSlugValues.includes("behoerde")) {
+    taeter = "behoerde";
+  } else if (areaSlugValues.includes("arbeit")) {
+    taeter = "unternehmen";
+  }
+
+  const impact = form.impact.trim();
+  const description = impact
+    ? `${form.description.trim()}\n\n${sections.sumImpactLabel}: ${impact}`
+    : form.description.trim();
+
+  return {
+    website: "",
+    source_url: typeof window !== "undefined" ? window.location.href : "",
+    rolle,
+    datum: form.date,
+    uhrzeit: normalizedTime.value,
+    region:
+      labelToSlug(form.district, sections.districts, REGION_SLUGS) ||
+      form.district,
+    ortsdetails: form.locationDetail,
+    lebensbereich: areaSlugValues,
+    lebensbereich_sonstiges: showAreaSonstiges.value
+      ? form.areaSonstiges.trim()
+      : "",
+    manifestation,
+    manifestation_sonstiges:
+      manifestation === "sonstiges" ? form.manifestationSonstiges.trim() : "",
+    beschreibung: description.slice(0, 5000),
+    taeter,
+    taeter_details: "",
+    ziel: form.mode === "counseling" ? "beratung" : "dokumentation",
+    kontakt_name: form.mode === "counseling" ? form.name : "",
+    kontakt_email: form.mode === "counseling" ? form.email : "",
+    telefon: form.mode === "counseling" ? form.phone : "",
+    dsgvo: form.consent ? 1 : 0,
+  };
+}
+
+async function handleSubmit() {
+  if (submitting.value) return;
+  showValidationError.value = true;
+
+  const validDistrict = Boolean(form.district);
+  const validDate = Boolean(form.date);
+  const rawTime = String(form.time || "").trim();
+  const validUhrzeit =
+    !rawTime || !/\d/u.test(rawTime) || Boolean(normalizedTime.value);
+  const validAreas = Array.isArray(form.areas) && form.areas.length > 0;
+  const validDesc = form.description.trim().length >= 20;
+  const validAreaSonstiges =
+    !showAreaSonstiges.value ||
+    (Boolean(form.areaSonstiges.trim()) &&
+      areaSonstigesWordCount.value <= 100);
+  const validManifestationSonstiges =
+    !showManifestationSonstiges.value ||
+    (Boolean(form.manifestationSonstiges.trim()) &&
+      manifestationSonstigesWordCount.value <= 100);
   const validEmail =
-    form.mode === 'anonymous' || (Boolean(form.email.trim()) && form.email.includes('@'))
-  const validConsent = Boolean(form.consent)
+    form.mode === "anonymous" ||
+    (Boolean(form.email.trim()) && form.email.includes("@"));
+  const validConsent = Boolean(form.consent);
 
   if (!validDistrict) {
-    scrollToSection('report-sec-1')
-    return
+    scrollToSection("report-sec-1");
+    return;
   }
-  if (!validDesc) {
-    scrollToSection('report-sec-2')
-    return
+  if (!validDate) {
+    scrollToSection("report-sec-1");
+    return;
+  }
+  if (!validUhrzeit) {
+    scrollToSection("report-sec-1");
+    return;
+  }
+  if (!validAreas || !validDesc || !validAreaSonstiges) {
+    scrollToSection("report-sec-2");
+    return;
+  }
+  const validManifestation =
+    form.racismTypes.length > 0 || form.incidentTypes.length > 0;
+  if (!validManifestation || !validManifestationSonstiges) {
+    scrollToSection("report-sec-3");
+    return;
   }
   if (!validEmail || !validConsent) {
-    scrollToSection('report-sec-4')
-    return
+    scrollToSection("report-sec-4");
+    return;
   }
 
-  referenceId.value = generateRefId()
-  isSubmitted.value = true
-  showValidationError.value = false
-  if (typeof window !== 'undefined') {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  submitting.value = true;
+  serverError.value = "";
+
+  const payload = buildApiPayload();
+
+  try {
+    const res = await fetch("/memoras-submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.ok) {
+      serverError.value =
+        data?.message ||
+        "Die Meldung konnte nicht gesendet werden. Bitte versuchen Sie es später erneut.";
+      submitting.value = false;
+      return;
+    }
+
+    referenceId.value = data.ref || generateRefId();
+    isSubmitted.value = true;
+    showValidationError.value = false;
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  } catch (err) {
+    serverError.value =
+      "Die Meldung konnte nicht gesendet werden. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.";
+    submitting.value = false;
+  } finally {
+    submitting.value = false;
   }
 }
 
 function resetForm() {
-  form.reporterRole = 'affected'
-  form.date = ''
-  form.time = ''
-  form.ongoing = false
-  form.district = ''
-  form.locationDetail = ''
-  form.areas = []
-  form.description = ''
-  form.racismTypes = []
-  form.incidentTypes = []
-  form.witnesses = 'unsure'
-  form.impact = ''
-  form.mode = 'counseling'
-  form.name = ''
-  form.email = ''
-  form.phone = ''
-  form.preferredLang = ''
-  form.preferredContact = 'email'
-  form.consent = false
-  showValidationError.value = false
-  isSubmitted.value = false
-  openDropdown.value = null
+  form.reporterRole = "affected";
+  form.date = "";
+  form.time = "";
+  form.ongoing = false;
+  form.district = "";
+  form.locationDetail = "";
+  form.areas = [];
+  form.areaSonstiges = "";
+  form.description = "";
+  form.racismTypes = [];
+  form.incidentTypes = [];
+  form.manifestationSonstiges = "";
+  form.witnesses = "unsure";
+  form.impact = "";
+  form.mode = "counseling";
+  form.name = "";
+  form.email = "";
+  form.phone = "";
+  form.preferredLang = "";
+  form.preferredContact = "email";
+  form.consent = false;
+  showValidationError.value = false;
+  isSubmitted.value = false;
+  openDropdown.value = null;
 }
 
 function goHome() {
-  store.clearActiveHref()
-  router.push('/')
+  store.clearActiveHref();
+  router.push("/");
 }
 
 function buildPlainTextSummary() {
+  const s = r.value.sections;
+
+  const modeOptions = Array.isArray(s.modeOptions) ? s.modeOptions : [];
+  const modeOpt = modeOptions.find((o) => o.id === form.mode) || modeOptions[0];
+  const modeLabel =
+    modeOpt?.title || (form.mode === "anonymous" ? "Anonym" : "Mit Beratungswunsch");
+
   const lines = [
     `advsh e. V. — Meldeformular (${referenceId.value})`,
     `================================================`,
-    `Modus: ${form.mode === 'anonymous' ? 'Anonym' : 'Mit Beratungswunsch'}`,
+    `Modus: ${modeLabel}`,
     `Rolle: ${selectedRoleOption.value?.title || form.reporterRole}`,
-    `Datum / Zeit: ${form.date || '-'} ${form.time || ''} ${form.ongoing ? '(Dauert an / Datum unbekannt)' : ''}`,
-    `Kreis / Ort: ${form.district} ${form.locationDetail ? `(${form.locationDetail})` : ''}`,
-    `Lebensbereiche: ${form.areas.length ? form.areas.join(', ') : '-'}`,
-    `Formen von Rassismus / Diskriminierung: ${form.racismTypes.length ? form.racismTypes.join(', ') : '-'}`,
-    `Art des Vorfalls: ${form.incidentTypes.length ? form.incidentTypes.join(', ') : '-'}`,
-    `Zeug*innen / Beweise: ${selectedWitnessOption.value?.label || form.witnesses}`,
+    `${s.sumDateLabel}: ${form.date || "-"} ${normalizedTime.value} ${
+      form.ongoing ? `(${s.ongoingLabel})` : ""
+    }`,
+    `${s.sumDistrictLabel}: ${form.district} ${
+      form.locationDetail ? `(${form.locationDetail})` : ""
+    }`,
+    `${s.sumAreasLabel}: ${form.areas.length ? form.areas.join(", ") : "-"}`,
+    `${s.sumRacismLabel}: ${
+      form.racismTypes.length ? form.racismTypes.join(", ") : "-"
+    }`,
+    `${s.sumIncidentLabel}: ${
+      form.incidentTypes.length ? form.incidentTypes.join(", ") : "-"
+    }`,
+    `${s.sumWitnessLabel}: ${selectedWitnessOption.value?.label || form.witnesses}`,
     ``,
-    `Schilderung:`,
+    `${s.sumDescriptionLabel}:`,
     form.description,
     ``,
-    `Folgen / Weitere Hinweise:`,
-    form.impact || '-',
-  ]
+    `${s.sumImpactLabel}:`,
+    form.impact || "-",
+  ];
 
-  if (form.mode === 'counseling') {
+  const contactLines = [];
+  if (form.name) contactLines.push(`${s.sumContactNameLabel}: ${form.name}`);
+  if (form.email) contactLines.push(`${s.sumContactEmailLabel}: ${form.email}`);
+  if (form.phone) contactLines.push(`${s.sumContactPhoneLabel}: ${form.phone}`);
+  if (form.preferredLang) contactLines.push(`${s.sumContactLangLabel}: ${form.preferredLang}`);
+  const contactWay = selectedContactOption.value?.label || form.preferredContact;
+  if (contactWay) contactLines.push(`${s.sumContactWayLabel}: ${contactWay}`);
+
+  if (contactLines.length) {
     lines.push(
       ``,
-      `Kontaktdaten für Beratung (BeAGGtiv / MRgD):`,
-      `Name / Pseudonym: ${form.name || '-'}`,
-      `E-Mail: ${form.email}`,
-      `Telefon: ${form.phone || '-'}`,
-      `Sprache: ${form.preferredLang || '-'}`,
-      `Bevorzugter Kontaktweg: ${selectedContactOption.value?.label || form.preferredContact}`
-    )
+      `${s.sumContactTitle}:`,
+      ...contactLines,
+    );
   }
 
-  return lines.join('\n')
+  return lines.join("\n");
 }
 
 const mailtoHref = computed(() => {
-  const subject = encodeURIComponent(`Vorfall melden [${referenceId.value}] – advsh`)
-  const body = encodeURIComponent(buildPlainTextSummary())
-  return `mailto:${contact.value.beaggtivEmail}?subject=${subject}&body=${body}`
-})
+  const subject = encodeURIComponent(
+    `Vorfall melden [${referenceId.value}] – advsh`,
+  );
+  const body = encodeURIComponent(buildPlainTextSummary());
+  return `mailto:${contact.value.beaggtivEmail}?subject=${subject}&body=${body}`;
+});
 
 function downloadReceipt() {
-  const text = buildPlainTextSummary()
-  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${referenceId.value || 'advsh-meldung'}.txt`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  const text = buildPlainTextSummary();
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${referenceId.value || "advsh-meldung"}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 </script>
 
@@ -428,7 +876,9 @@ function downloadReceipt() {
 
     <div class="shell">
       <div class="report-top-nav">
-        <AppBreadcrumb :current="store.nav.reportCta?.label || 'Vorfall melden'" />
+        <AppBreadcrumb
+          :current="store.nav.reportCta?.label || 'Vorfall melden'"
+        />
 
         <!-- Mobile-friendly one-tap direct call pill right at the top -->
         <a class="quick-call-pill" :href="contact.beaggtivPhoneHref">
@@ -462,7 +912,7 @@ function downloadReceipt() {
           <h2>{{ r.success.title }}</h2>
           <p>
             {{
-              form.mode === 'anonymous'
+              form.mode === "anonymous"
                 ? r.success.textAnonymous
                 : r.success.textCounseling
             }}
@@ -477,24 +927,44 @@ function downloadReceipt() {
           <h3>{{ r.success.summaryTitle }}</h3>
           <dl class="summary-grid">
             <div>
-              <dt>{{ r.sections.districtLabel.replace(' *', '') }}</dt>
-              <dd>{{ form.district }} <span v-if="form.locationDetail">· {{ form.locationDetail }}</span></dd>
+              <dt>{{ r.sections.districtLabel.replace(" *", "") }}</dt>
+              <dd>
+                {{ form.district }}
+                <span v-if="form.locationDetail"
+                  >· {{ form.locationDetail }}</span
+                >
+              </dd>
             </div>
             <div v-if="form.date || form.ongoing">
               <dt>{{ r.sections.dateLabel }}</dt>
-              <dd>{{ form.date || '—' }} <span v-if="form.time">({{ form.time }})</span></dd>
+              <dd>
+                {{ form.date || "—" }}
+                <span v-if="normalizedTime">{{ normalizedTime }}</span>
+              </dd>
             </div>
             <div v-if="form.areas.length">
               <dt>{{ r.sections.s2Label }}</dt>
-              <dd>{{ form.areas.join(', ') }}</dd>
+              <dd>{{ form.areas.join(", ") }}</dd>
             </div>
             <div v-if="form.racismTypes.length">
               <dt>{{ r.sections.s3Label }}</dt>
-              <dd>{{ form.racismTypes.join(', ') }}</dd>
+              <dd>{{ form.racismTypes.join(", ") }}</dd>
             </div>
             <div class="summary-full">
-              <dt>{{ r.sections.descriptionLabel.replace(' *', '') }}</dt>
+              <dt>{{ r.sections.descriptionLabel.replace(" *", "") }}</dt>
               <dd class="summary-desc">{{ form.description }}</dd>
+            </div>
+            <div v-if="form.mode === 'counseling'" class="summary-full">
+              <dt>{{ r.sections.nameLabel }}</dt>
+              <dd class="summary-desc">{{ form.name || "—" }}</dd>
+            </div>
+            <div v-if="form.mode === 'counseling'" class="summary-full">
+              <dt>{{ r.sections.emailLabel }}</dt>
+              <dd class="summary-desc">{{ form.email || "—" }}</dd>
+            </div>
+            <div v-if="form.mode === 'counseling'" class="summary-full">
+              <dt>{{ r.sections.phoneLabel }}</dt>
+              <dd class="summary-desc">{{ form.phone || "—" }}</dd>
             </div>
           </dl>
 
@@ -503,7 +973,11 @@ function downloadReceipt() {
               {{ r.success.sendMailBtn }}
               <span class="arr" aria-hidden="true">↗</span>
             </a>
-            <button type="button" class="btn btn--outline" @click="downloadReceipt">
+            <button
+              type="button"
+              class="btn btn--outline"
+              @click="downloadReceipt"
+            >
               {{ r.success.downloadBtn }}
             </button>
             <button type="button" class="btn btn--outline" @click="resetForm">
@@ -528,7 +1002,9 @@ function downloadReceipt() {
                 :class="{ 'is-done': sectionDone.s1 }"
                 @click="scrollToSection('report-sec-1')"
               >
-                <span class="step-check" aria-hidden="true">{{ sectionDone.s1 ? '✓' : '1' }}</span>
+                <span class="step-check" aria-hidden="true">{{
+                  sectionDone.s1 ? "✓" : "1"
+                }}</span>
                 <span>{{ mobileUi.stepTitles[0] }}</span>
               </button>
               <button
@@ -537,7 +1013,9 @@ function downloadReceipt() {
                 :class="{ 'is-done': sectionDone.s2 }"
                 @click="scrollToSection('report-sec-2')"
               >
-                <span class="step-check" aria-hidden="true">{{ sectionDone.s2 ? '✓' : '2' }}</span>
+                <span class="step-check" aria-hidden="true">{{
+                  sectionDone.s2 ? "✓" : "2"
+                }}</span>
                 <span>{{ mobileUi.stepTitles[1] }}</span>
               </button>
               <button
@@ -546,7 +1024,9 @@ function downloadReceipt() {
                 :class="{ 'is-done': sectionDone.s3 }"
                 @click="scrollToSection('report-sec-3')"
               >
-                <span class="step-check" aria-hidden="true">{{ sectionDone.s3 ? '✓' : '3' }}</span>
+                <span class="step-check" aria-hidden="true">{{
+                  sectionDone.s3 ? "✓" : "3"
+                }}</span>
                 <span>{{ mobileUi.stepTitles[2] }}</span>
               </button>
               <button
@@ -555,12 +1035,17 @@ function downloadReceipt() {
                 :class="{ 'is-done': sectionDone.s4 }"
                 @click="scrollToSection('report-sec-4')"
               >
-                <span class="step-check" aria-hidden="true">{{ sectionDone.s4 ? '✓' : '4' }}</span>
+                <span class="step-check" aria-hidden="true">{{
+                  sectionDone.s4 ? "✓" : "4"
+                }}</span>
                 <span>{{ mobileUi.stepTitles[3] }}</span>
               </button>
             </div>
             <div class="progress-track" aria-hidden="true">
-              <div class="progress-fill" :style="{ width: completionPercent + '%' }"></div>
+              <div
+                class="progress-fill"
+                :style="{ width: completionPercent + '%' }"
+              ></div>
             </div>
           </nav>
 
@@ -576,8 +1061,13 @@ function downloadReceipt() {
               <div class="field-row">
                 <!-- Custom Single-Select Dropdown: Reporter Role -->
                 <div class="field-group">
-                  <label class="field-label">{{ r.sections.reporterLabel }}</label>
-                  <div class="custom-dd" :class="{ 'is-open': openDropdown === 'role' }">
+                  <label class="field-label">{{
+                    r.sections.reporterLabel
+                  }}</label>
+                  <div
+                    class="custom-dd"
+                    :class="{ 'is-open': openDropdown === 'role' }"
+                  >
                     <button
                       type="button"
                       class="dd-trigger"
@@ -585,17 +1075,34 @@ function downloadReceipt() {
                       @click="toggleDropdown('role')"
                     >
                       <span class="dd-trigger-content">
-                        <span class="dd-dot dd-dot--red" aria-hidden="true"></span>
-                        <span class="dd-value">{{ selectedRoleOption.title }}</span>
+                        <span
+                          class="dd-dot dd-dot--red"
+                          aria-hidden="true"
+                        ></span>
+                        <span class="dd-value">{{
+                          selectedRoleOption.title
+                        }}</span>
                       </span>
                       <span class="dd-chevron" aria-hidden="true">▾</span>
                     </button>
 
-                    <div v-if="openDropdown === 'role'" class="dd-menu" role="listbox">
+                    <div
+                      v-if="openDropdown === 'role'"
+                      class="dd-menu"
+                      role="listbox"
+                    >
                       <div class="dd-sheet-header">
                         <span class="dd-sheet-handle" aria-hidden="true"></span>
-                        <strong>{{ r.sections.reporterLabel.replace(' *', '') }}</strong>
-                        <button type="button" class="dd-sheet-close" @click="closeDropdown">✕</button>
+                        <strong>{{
+                          r.sections.reporterLabel.replace(" *", "")
+                        }}</strong>
+                        <button
+                          type="button"
+                          class="dd-sheet-close"
+                          @click="closeDropdown"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div class="dd-menu-body">
                         <button
@@ -603,7 +1110,9 @@ function downloadReceipt() {
                           :key="opt.id"
                           type="button"
                           class="dd-option dd-option--rich"
-                          :class="{ 'is-selected': form.reporterRole === opt.id }"
+                          :class="{
+                            'is-selected': form.reporterRole === opt.id,
+                          }"
                           @click="selectSingle('reporterRole', opt.id)"
                         >
                           <span class="dd-radio" aria-hidden="true"></span>
@@ -619,12 +1128,20 @@ function downloadReceipt() {
 
                 <!-- Custom Single-Select Dropdown: District / City -->
                 <div class="field-group">
-                  <label class="field-label">{{ r.sections.districtLabel }}</label>
-                  <div class="custom-dd" :class="{ 'is-open': openDropdown === 'district' }">
+                  <label class="field-label">{{
+                    r.sections.districtLabel
+                  }}</label>
+                  <div
+                    class="custom-dd"
+                    :class="{ 'is-open': openDropdown === 'district' }"
+                  >
                     <button
                       type="button"
                       class="dd-trigger"
-                      :class="{ 'is-invalid': isDistrictInvalid, 'is-placeholder': !form.district }"
+                      :class="{
+                        'is-invalid': isDistrictInvalid,
+                        'is-placeholder': !form.district,
+                      }"
                       :aria-expanded="openDropdown === 'district'"
                       @click="toggleDropdown('district')"
                     >
@@ -637,11 +1154,23 @@ function downloadReceipt() {
                       <span class="dd-chevron" aria-hidden="true">▾</span>
                     </button>
 
-                    <div v-if="openDropdown === 'district'" class="dd-menu dd-menu--scroll" role="listbox">
+                    <div
+                      v-if="openDropdown === 'district'"
+                      class="dd-menu dd-menu--scroll"
+                      role="listbox"
+                    >
                       <div class="dd-sheet-header">
                         <span class="dd-sheet-handle" aria-hidden="true"></span>
-                        <strong>{{ r.sections.districtLabel.replace(' *', '') }}</strong>
-                        <button type="button" class="dd-sheet-close" @click="closeDropdown">✕</button>
+                        <strong>{{
+                          r.sections.districtLabel.replace(" *", "")
+                        }}</strong>
+                        <button
+                          type="button"
+                          class="dd-sheet-close"
+                          @click="closeDropdown"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div class="dd-menu-body">
                         <button
@@ -665,12 +1194,16 @@ function downloadReceipt() {
               <div class="field-row field-row--top-gap">
                 <div class="field-group">
                   <div class="field-label field-label--with-helpers">
-                    <label for="incident-date">{{ r.sections.dateLabel }}</label>
+                    <label for="incident-date">{{
+                      r.sections.dateLabel
+                    }}</label>
                     <span class="quick-date-pills">
                       <button
                         type="button"
                         class="mini-pill"
-                        :class="{ 'is-active': form.date === todayIso && !form.ongoing }"
+                        :class="{
+                          'is-active': form.date === todayIso && !form.ongoing,
+                        }"
                         @click="setQuickDate('today')"
                       >
                         {{ mobileUi.today }}
@@ -678,7 +1211,10 @@ function downloadReceipt() {
                       <button
                         type="button"
                         class="mini-pill"
-                        :class="{ 'is-active': form.date === yesterdayIso && !form.ongoing }"
+                        :class="{
+                          'is-active':
+                            form.date === yesterdayIso && !form.ongoing,
+                        }"
                         @click="setQuickDate('yesterday')"
                       >
                         {{ mobileUi.yesterday }}
@@ -690,17 +1226,21 @@ function downloadReceipt() {
                     v-model="form.date"
                     type="date"
                     class="text-input"
+                    :class="{ 'is-invalid': isDatumInvalid }"
                     :disabled="form.ongoing"
                   />
                 </div>
 
                 <div class="field-group">
-                  <label class="field-label" for="incident-time">{{ r.sections.timeLabel }}</label>
+                  <label class="field-label" for="incident-time">{{
+                    r.sections.timeLabel
+                  }}</label>
                   <input
                     id="incident-time"
                     v-model="form.time"
                     type="text"
                     class="text-input"
+                    :class="{ 'is-invalid': isUhrzeitInvalid }"
                     :placeholder="r.sections.timePlaceholder"
                   />
                 </div>
@@ -735,31 +1275,51 @@ function downloadReceipt() {
 
               <div class="field-group">
                 <label class="field-label">{{ r.sections.areaLabel }}</label>
-                <div class="custom-dd" :class="{ 'is-open': openDropdown === 'areas' }">
+                <div
+                  class="custom-dd"
+                  :class="{ 'is-open': openDropdown === 'areas' }"
+                >
                   <button
                     type="button"
                     class="dd-trigger"
-                    :class="{ 'is-placeholder': !form.areas.length }"
+                    :class="{ 'is-placeholder': !form.areas.length, 'is-invalid': isAreasInvalid }"
                     :aria-expanded="openDropdown === 'areas'"
                     @click="toggleDropdown('areas')"
                   >
                     <span class="dd-trigger-content">
                       <span class="dd-dot" aria-hidden="true"></span>
                       <span class="dd-value">
-                        {{ formatMultiSummary(form.areas, r.sections.areas.slice(0, 3).join(', ') + ' …') }}
+                        {{
+                          formatMultiSummary(
+                            form.areas,
+                            r.sections.areas.slice(0, 3).join(", ") + " …",
+                          )
+                        }}
                       </span>
                     </span>
                     <span class="dd-right">
-                      <span v-if="form.areas.length" class="dd-count-badge">{{ form.areas.length }}</span>
+                      <span v-if="form.areas.length" class="dd-count-badge">{{
+                        form.areas.length
+                      }}</span>
                       <span class="dd-chevron" aria-hidden="true">▾</span>
                     </span>
                   </button>
 
-                  <div v-if="openDropdown === 'areas'" class="dd-menu dd-menu--grid" role="group">
+                  <div
+                    v-if="openDropdown === 'areas'"
+                    class="dd-menu dd-menu--grid"
+                    role="group"
+                  >
                     <div class="dd-sheet-header">
                       <span class="dd-sheet-handle" aria-hidden="true"></span>
                       <strong>{{ r.sections.s2Label }}</strong>
-                      <button type="button" class="dd-sheet-close" @click="closeDropdown">✕</button>
+                      <button
+                        type="button"
+                        class="dd-sheet-close"
+                        @click="closeDropdown"
+                      >
+                        ✕
+                      </button>
                     </div>
                     <div class="dd-menu-body dd-menu-body--grid">
                       <button
@@ -783,7 +1343,11 @@ function downloadReceipt() {
                       >
                         {{ mobileUi.clear }}
                       </button>
-                      <button type="button" class="dd-done-btn" @click="closeDropdown">
+                      <button
+                        type="button"
+                        class="dd-done-btn"
+                        @click="closeDropdown"
+                      >
                         {{ mobileUi.done }} ({{ form.areas.length }})
                       </button>
                     </div>
@@ -792,10 +1356,47 @@ function downloadReceipt() {
 
                 <!-- Selected tags preview -->
                 <div v-if="form.areas.length" class="selected-tags">
-                  <span v-for="area in form.areas" :key="area" class="selected-tag">
+                  <span
+                    v-for="area in form.areas"
+                    :key="area"
+                    class="selected-tag"
+                  >
                     {{ area }}
-                    <button type="button" aria-label="Remove" @click="toggleArrayItem(form.areas, area)">×</button>
+                    <button
+                      type="button"
+                      aria-label="Remove"
+                      @click="toggleArrayItem(form.areas, area)"
+                    >
+                      ×
+                    </button>
                   </span>
+                </div>
+
+                <div
+                  v-if="showAreaSonstiges"
+                  class="field-group field-row--top-gap"
+                >
+                  <label class="field-label" for="area-sonstiges">
+                    {{ r.sections.sonstigesLabel }}
+                  </label>
+                  <input
+                    id="area-sonstiges"
+                    v-model="form.areaSonstiges"
+                    type="text"
+                    class="text-input"
+                    :class="{ 'is-invalid': isAreaSonstigesInvalid }"
+                    :placeholder="r.sections.sonstigesPlaceholder"
+                  />
+                  <p
+                    v-if="isAreaSonstigesInvalid"
+                    class="field-hint field-hint--error"
+                  >
+                    {{
+                      areaSonstigesWordCount > 100
+                        ? r.sections.validationSonstigesWordsError
+                        : r.sections.validationSonstigesError
+                    }}
+                  </p>
                 </div>
               </div>
 
@@ -829,8 +1430,13 @@ function downloadReceipt() {
               <div class="field-row">
                 <!-- Multi-Select Dropdown: Forms of Racism / Discrimination -->
                 <div class="field-group">
-                  <label class="field-label">{{ r.sections.racismTypesLabel }}</label>
-                  <div class="custom-dd" :class="{ 'is-open': openDropdown === 'racism' }">
+                  <label class="field-label">{{
+                    r.sections.racismTypesLabel
+                  }}</label>
+                  <div
+                    class="custom-dd"
+                    :class="{ 'is-open': openDropdown === 'racism' }"
+                  >
                     <button
                       type="button"
                       class="dd-trigger"
@@ -841,22 +1447,40 @@ function downloadReceipt() {
                       <span class="dd-trigger-content">
                         <span class="dd-dot" aria-hidden="true"></span>
                         <span class="dd-value">
-                          {{ formatMultiSummary(form.racismTypes, r.sections.racismTypes[0] + ' …') }}
+                          {{
+                            formatMultiSummary(
+                              form.racismTypes,
+                              r.sections.racismTypes[0] + " …",
+                            )
+                          }}
                         </span>
                       </span>
                       <span class="dd-right">
-                        <span v-if="form.racismTypes.length" class="dd-count-badge">
+                        <span
+                          v-if="form.racismTypes.length"
+                          class="dd-count-badge"
+                        >
                           {{ form.racismTypes.length }}
                         </span>
                         <span class="dd-chevron" aria-hidden="true">▾</span>
                       </span>
                     </button>
 
-                    <div v-if="openDropdown === 'racism'" class="dd-menu dd-menu--scroll" role="group">
+                    <div
+                      v-if="openDropdown === 'racism'"
+                      class="dd-menu dd-menu--scroll"
+                      role="group"
+                    >
                       <div class="dd-sheet-header">
                         <span class="dd-sheet-handle" aria-hidden="true"></span>
                         <strong>{{ r.sections.racismTypesLabel }}</strong>
-                        <button type="button" class="dd-sheet-close" @click="closeDropdown">✕</button>
+                        <button
+                          type="button"
+                          class="dd-sheet-close"
+                          @click="closeDropdown"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div class="dd-menu-body">
                         <button
@@ -864,7 +1488,9 @@ function downloadReceipt() {
                           :key="rtype"
                           type="button"
                           class="dd-option"
-                          :class="{ 'is-selected': form.racismTypes.includes(rtype) }"
+                          :class="{
+                            'is-selected': form.racismTypes.includes(rtype),
+                          }"
                           @click="toggleArrayItem(form.racismTypes, rtype)"
                         >
                           <span class="dd-check" aria-hidden="true">✓</span>
@@ -880,7 +1506,11 @@ function downloadReceipt() {
                         >
                           {{ mobileUi.clear }}
                         </button>
-                        <button type="button" class="dd-done-btn" @click="closeDropdown">
+                        <button
+                          type="button"
+                          class="dd-done-btn"
+                          @click="closeDropdown"
+                        >
                           {{ mobileUi.done }} ({{ form.racismTypes.length }})
                         </button>
                       </div>
@@ -888,17 +1518,32 @@ function downloadReceipt() {
                   </div>
 
                   <div v-if="form.racismTypes.length" class="selected-tags">
-                    <span v-for="rt in form.racismTypes" :key="rt" class="selected-tag">
+                    <span
+                      v-for="rt in form.racismTypes"
+                      :key="rt"
+                      class="selected-tag"
+                    >
                       {{ rt }}
-                      <button type="button" aria-label="Remove" @click="toggleArrayItem(form.racismTypes, rt)">×</button>
+                      <button
+                        type="button"
+                        aria-label="Remove"
+                        @click="toggleArrayItem(form.racismTypes, rt)"
+                      >
+                        ×
+                      </button>
                     </span>
                   </div>
                 </div>
 
                 <!-- Multi-Select Dropdown: Type of Incident -->
                 <div class="field-group">
-                  <label class="field-label">{{ r.sections.incidentTypesLabel }}</label>
-                  <div class="custom-dd" :class="{ 'is-open': openDropdown === 'incident' }">
+                  <label class="field-label">{{
+                    r.sections.incidentTypesLabel
+                  }}</label>
+                  <div
+                    class="custom-dd"
+                    :class="{ 'is-open': openDropdown === 'incident' }"
+                  >
                     <button
                       type="button"
                       class="dd-trigger"
@@ -907,24 +1552,45 @@ function downloadReceipt() {
                       @click="toggleDropdown('incident')"
                     >
                       <span class="dd-trigger-content">
-                        <span class="dd-dot dd-dot--red" aria-hidden="true"></span>
+                        <span
+                          class="dd-dot dd-dot--red"
+                          aria-hidden="true"
+                        ></span>
                         <span class="dd-value">
-                          {{ formatMultiSummary(form.incidentTypes, r.sections.incidentTypes[0] + ' …') }}
+                          {{
+                            formatMultiSummary(
+                              form.incidentTypes,
+                              r.sections.incidentTypes[0] + " …",
+                            )
+                          }}
                         </span>
                       </span>
                       <span class="dd-right">
-                        <span v-if="form.incidentTypes.length" class="dd-count-badge dd-count-badge--red">
+                        <span
+                          v-if="form.incidentTypes.length"
+                          class="dd-count-badge dd-count-badge--red"
+                        >
                           {{ form.incidentTypes.length }}
                         </span>
                         <span class="dd-chevron" aria-hidden="true">▾</span>
                       </span>
                     </button>
 
-                    <div v-if="openDropdown === 'incident'" class="dd-menu dd-menu--scroll" role="group">
+                    <div
+                      v-if="openDropdown === 'incident'"
+                      class="dd-menu dd-menu--scroll"
+                      role="group"
+                    >
                       <div class="dd-sheet-header">
                         <span class="dd-sheet-handle" aria-hidden="true"></span>
                         <strong>{{ r.sections.incidentTypesLabel }}</strong>
-                        <button type="button" class="dd-sheet-close" @click="closeDropdown">✕</button>
+                        <button
+                          type="button"
+                          class="dd-sheet-close"
+                          @click="closeDropdown"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div class="dd-menu-body">
                         <button
@@ -932,7 +1598,9 @@ function downloadReceipt() {
                           :key="itype"
                           type="button"
                           class="dd-option dd-option--red"
-                          :class="{ 'is-selected': form.incidentTypes.includes(itype) }"
+                          :class="{
+                            'is-selected': form.incidentTypes.includes(itype),
+                          }"
                           @click="toggleArrayItem(form.incidentTypes, itype)"
                         >
                           <span class="dd-check" aria-hidden="true">✓</span>
@@ -948,7 +1616,11 @@ function downloadReceipt() {
                         >
                           {{ mobileUi.clear }}
                         </button>
-                        <button type="button" class="dd-done-btn" @click="closeDropdown">
+                        <button
+                          type="button"
+                          class="dd-done-btn"
+                          @click="closeDropdown"
+                        >
                           {{ mobileUi.done }} ({{ form.incidentTypes.length }})
                         </button>
                       </div>
@@ -962,17 +1634,55 @@ function downloadReceipt() {
                       class="selected-tag selected-tag--red"
                     >
                       {{ it }}
-                      <button type="button" aria-label="Remove" @click="toggleArrayItem(form.incidentTypes, it)">×</button>
+                      <button
+                        type="button"
+                        aria-label="Remove"
+                        @click="toggleArrayItem(form.incidentTypes, it)"
+                      >
+                        ×
+                      </button>
                     </span>
                   </div>
                 </div>
               </div>
 
+              <div
+                v-if="showManifestationSonstiges"
+                class="field-group field-row--top-gap"
+              >
+                <label class="field-label" for="manifestation-sonstiges">
+                  {{ r.sections.sonstigesLabel }}
+                </label>
+                <input
+                  id="manifestation-sonstiges"
+                  v-model="form.manifestationSonstiges"
+                  type="text"
+                  class="text-input"
+                  :class="{ 'is-invalid': isManifestationSonstigesInvalid }"
+                  :placeholder="r.sections.sonstigesPlaceholder"
+                />
+                <p
+                  v-if="isManifestationSonstigesInvalid"
+                  class="field-hint field-hint--error"
+                >
+                  {{
+                    manifestationSonstigesWordCount > 100
+                      ? r.sections.validationSonstigesWordsError
+                      : r.sections.validationSonstigesError
+                  }}
+                </p>
+              </div>
+
               <!-- Row 2: Witnesses Dropdown + Impact Input (Same Level!) -->
               <div class="field-row field-row--top-gap">
                 <div class="field-group">
-                  <label class="field-label">{{ r.sections.witnessesLabel }}</label>
-                  <div class="custom-dd" :class="{ 'is-open': openDropdown === 'witnesses' }">
+                  <label class="field-label">{{
+                    r.sections.witnessesLabel
+                  }}</label>
+                  <div
+                    class="custom-dd"
+                    :class="{ 'is-open': openDropdown === 'witnesses' }"
+                  >
                     <button
                       type="button"
                       class="dd-trigger"
@@ -981,16 +1691,28 @@ function downloadReceipt() {
                     >
                       <span class="dd-trigger-content">
                         <span class="dd-dot" aria-hidden="true"></span>
-                        <span class="dd-value">{{ selectedWitnessOption.label }}</span>
+                        <span class="dd-value">{{
+                          selectedWitnessOption.label
+                        }}</span>
                       </span>
                       <span class="dd-chevron" aria-hidden="true">▾</span>
                     </button>
 
-                    <div v-if="openDropdown === 'witnesses'" class="dd-menu" role="listbox">
+                    <div
+                      v-if="openDropdown === 'witnesses'"
+                      class="dd-menu"
+                      role="listbox"
+                    >
                       <div class="dd-sheet-header">
                         <span class="dd-sheet-handle" aria-hidden="true"></span>
                         <strong>{{ r.sections.witnessesLabel }}</strong>
-                        <button type="button" class="dd-sheet-close" @click="closeDropdown">✕</button>
+                        <button
+                          type="button"
+                          class="dd-sheet-close"
+                          @click="closeDropdown"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div class="dd-menu-body">
                         <button
@@ -1058,7 +1780,9 @@ function downloadReceipt() {
               <div v-if="form.mode === 'counseling'" class="contact-fields-box">
                 <div class="field-row">
                   <div class="field-group">
-                    <label class="field-label" for="reporter-name">{{ r.sections.nameLabel }}</label>
+                    <label class="field-label" for="reporter-name">{{
+                      r.sections.nameLabel
+                    }}</label>
                     <input
                       id="reporter-name"
                       v-model="form.name"
@@ -1069,7 +1793,9 @@ function downloadReceipt() {
                     />
                   </div>
                   <div class="field-group">
-                    <label class="field-label" for="reporter-email">{{ r.sections.emailLabel }}</label>
+                    <label class="field-label" for="reporter-email">{{
+                      r.sections.emailLabel
+                    }}</label>
                     <input
                       id="reporter-email"
                       v-model="form.email"
@@ -1086,7 +1812,9 @@ function downloadReceipt() {
 
                 <div class="field-row field-row--top-gap">
                   <div class="field-group">
-                    <label class="field-label" for="reporter-phone">{{ r.sections.phoneLabel }}</label>
+                    <label class="field-label" for="reporter-phone">{{
+                      r.sections.phoneLabel
+                    }}</label>
                     <input
                       id="reporter-phone"
                       v-model="form.phone"
@@ -1112,8 +1840,13 @@ function downloadReceipt() {
                 </div>
 
                 <div class="field-group field-row--top-gap">
-                  <label class="field-label">{{ r.sections.preferredContactLabel }}</label>
-                  <div class="custom-dd" :class="{ 'is-open': openDropdown === 'contact' }">
+                  <label class="field-label">{{
+                    r.sections.preferredContactLabel
+                  }}</label>
+                  <div
+                    class="custom-dd"
+                    :class="{ 'is-open': openDropdown === 'contact' }"
+                  >
                     <button
                       type="button"
                       class="dd-trigger"
@@ -1122,16 +1855,28 @@ function downloadReceipt() {
                     >
                       <span class="dd-trigger-content">
                         <span class="dd-dot" aria-hidden="true"></span>
-                        <span class="dd-value">{{ selectedContactOption.label }}</span>
+                        <span class="dd-value">{{
+                          selectedContactOption.label
+                        }}</span>
                       </span>
                       <span class="dd-chevron" aria-hidden="true">▾</span>
                     </button>
 
-                    <div v-if="openDropdown === 'contact'" class="dd-menu" role="listbox">
+                    <div
+                      v-if="openDropdown === 'contact'"
+                      class="dd-menu"
+                      role="listbox"
+                    >
                       <div class="dd-sheet-header">
                         <span class="dd-sheet-handle" aria-hidden="true"></span>
                         <strong>{{ r.sections.preferredContactLabel }}</strong>
-                        <button type="button" class="dd-sheet-close" @click="closeDropdown">✕</button>
+                        <button
+                          type="button"
+                          class="dd-sheet-close"
+                          @click="closeDropdown"
+                        >
+                          ✕
+                        </button>
                       </div>
                       <div class="dd-menu-body">
                         <button
@@ -1139,7 +1884,9 @@ function downloadReceipt() {
                           :key="cOpt.id"
                           type="button"
                           class="dd-option"
-                          :class="{ 'is-selected': form.preferredContact === cOpt.id }"
+                          :class="{
+                            'is-selected': form.preferredContact === cOpt.id,
+                          }"
                           @click="selectSingle('preferredContact', cOpt.id)"
                         >
                           <span class="dd-radio" aria-hidden="true"></span>
@@ -1152,7 +1899,10 @@ function downloadReceipt() {
               </div>
 
               <!-- Privacy Consent -->
-              <div class="consent-box" :class="{ 'is-invalid': isConsentInvalid }">
+              <div
+                class="consent-box"
+                :class="{ 'is-invalid': isConsentInvalid }"
+              >
                 <label class="checkbox-row checkbox-row--consent">
                   <input v-model="form.consent" type="checkbox" required />
                   <span>
@@ -1170,24 +1920,52 @@ function downloadReceipt() {
               </div>
 
               <p
-                v-if="showValidationError && (isDistrictInvalid || isDescriptionInvalid || isEmailInvalid || isConsentInvalid)"
+                v-if="
+                  showValidationError &&
+                  (isDistrictInvalid ||
+                    isAreasInvalid ||
+                    isAreaSonstigesInvalid ||
+                    isDatumInvalid ||
+                    isBeschreibungInvalid ||
+                    isManifestInvalid ||
+                    isManifestationSonstigesInvalid ||
+                    isUhrzeitInvalid ||
+                    isDescriptionInvalid ||
+                    isEmailInvalid ||
+                    isConsentInvalid)
+                "
                 class="validation-banner"
                 role="alert"
               >
-                {{ r.sections.validationError }}
+                {{ validationMessage }}
+              </p>
+
+              <p v-if="serverError" class="validation-banner" role="alert">
+                {{ serverError }}
               </p>
 
               <div class="submit-bar">
                 <div class="submit-actions">
-                  <button type="submit" class="btn btn--submit">
+                  <button
+                    type="button"
+                    class="btn btn--submit"
+                    :disabled="submitting"
+                    @click="handleSubmit"
+                  >
                     {{ r.sections.submitBtn }}
                     <span class="arr" aria-hidden="true">↗</span>
                   </button>
-                  <button type="button" class="btn btn--outline" @click="resetForm">
+                  <button
+                    type="button"
+                    class="btn btn--outline"
+                    @click="resetForm"
+                  >
                     {{ r.sections.resetBtn }}
                   </button>
                 </div>
-                <small class="required-note">{{ r.sections.requiredNote }}</small>
+                <small class="required-note">{{
+                  r.sections.requiredNote
+                }}</small>
               </div>
             </article>
           </form>
@@ -1203,11 +1981,15 @@ function downloadReceipt() {
             <div class="sidebar-contacts">
               <div class="sidebar-contact-item">
                 <span>{{ r.sidebar.phoneLabel }}</span>
-                <a :href="contact.beaggtivPhoneHref">{{ contact.beaggtivPhone }}</a>
+                <a :href="contact.beaggtivPhoneHref">{{
+                  contact.beaggtivPhone
+                }}</a>
               </div>
               <div class="sidebar-contact-item">
                 <span>{{ r.sidebar.emailLabel }}</span>
-                <a :href="contact.beaggtivEmailHref">{{ contact.beaggtivEmail }}</a>
+                <a :href="contact.beaggtivEmailHref">{{
+                  contact.beaggtivEmail
+                }}</a>
               </div>
             </div>
 
@@ -1290,7 +2072,10 @@ function downloadReceipt() {
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background .25s, border-color .25s, transform .25s;
+  transition:
+    background 0.25s,
+    border-color 0.25s,
+    transform 0.25s;
 }
 .back-btn:hover {
   background: var(--logo-blue);
@@ -1344,12 +2129,12 @@ function downloadReceipt() {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: .24em;
+  gap: 0.24em;
   font-family: var(--display);
   font-size: clamp(2.6rem, 5vw, 4.75rem);
   font-weight: 500;
-  line-height: .95;
-  letter-spacing: -.045em;
+  line-height: 0.95;
+  letter-spacing: -0.045em;
 }
 
 .report-hero h1 em.accent-word {
@@ -1363,9 +2148,9 @@ function downloadReceipt() {
   content: "";
   position: absolute;
   right: 0;
-  bottom: .04em;
+  bottom: 0.04em;
   left: 0;
-  height: .05em;
+  height: 0.05em;
   background: var(--logo-blue);
   z-index: -1;
 }
@@ -1422,7 +2207,7 @@ function downloadReceipt() {
   background: var(--paper-glass);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  box-shadow: 0 14px 28px -20px rgba(16, 32, 31, .2);
+  box-shadow: 0 14px 28px -20px rgba(16, 32, 31, 0.2);
 }
 
 .step-pills {
@@ -1452,7 +2237,10 @@ function downloadReceipt() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: border-color .2s, background .2s, color .2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
 }
 
 .step-jump-pill > span:last-child {
@@ -1468,7 +2256,7 @@ function downloadReceipt() {
 
 .step-jump-pill.is-done {
   border-color: var(--logo-blue);
-  background: rgba(8, 47, 119, .06);
+  background: rgba(8, 47, 119, 0.06);
   color: var(--logo-blue);
 }
 
@@ -1503,13 +2291,13 @@ function downloadReceipt() {
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, var(--logo-blue), var(--logo-red));
-  transition: width .35s ease;
+  transition: width 0.35s ease;
 }
 
 /* Layout Grid */
 .report-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.65fr) minmax(300px, .85fr);
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, 0.85fr);
   gap: clamp(28px, 4vw, 48px);
   align-items: start;
   width: 100%;
@@ -1540,7 +2328,7 @@ function downloadReceipt() {
   border: 1px solid var(--line);
   border-radius: 26px;
   background: var(--paper);
-  box-shadow: 0 22px 44px -34px rgba(16, 32, 31, .18);
+  box-shadow: 0 22px 44px -34px rgba(16, 32, 31, 0.18);
 }
 
 .form-card--highlight {
@@ -1560,7 +2348,7 @@ function downloadReceipt() {
   font-size: clamp(1.45rem, 2.4vw, 2.05rem);
   font-weight: 500;
   line-height: 1.12;
-  letter-spacing: -.03em;
+  letter-spacing: -0.03em;
 }
 
 /* Field Rows & Strict Same-Level Alignment */
@@ -1623,7 +2411,10 @@ function downloadReceipt() {
   font-size: 11px;
   font-weight: 750;
   cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
 }
 .mini-pill:hover,
 .mini-pill.is-active {
@@ -1639,12 +2430,17 @@ function downloadReceipt() {
   line-height: 1.55;
 }
 
+.field-hint--error {
+  color: var(--logo-red);
+  font-weight: 600;
+}
+
 /* Prompt Helper Box for Mobile Description Writing */
 .prompt-helper-box {
   padding: 12px 14px;
   border: 1px dashed var(--line-strong);
   border-radius: 14px;
-  background: rgba(244, 239, 228, .65);
+  background: rgba(244, 239, 228, 0.65);
 }
 
 .prompt-helper-label {
@@ -1671,7 +2467,11 @@ function downloadReceipt() {
   font-size: 12.5px;
   font-weight: 750;
   cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s, transform .15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
 }
 
 .prompt-pill:hover {
@@ -1681,7 +2481,7 @@ function downloadReceipt() {
 }
 
 .prompt-pill:active {
-  transform: scale(.97);
+  transform: scale(0.97);
 }
 
 /* Uniform 52px height & 16px font on mobile to prevent iOS Safari zoom */
@@ -1702,7 +2502,10 @@ function downloadReceipt() {
   font-size: 15px;
   line-height: 1.4;
   overflow: hidden;
-  transition: border-color .2s, box-shadow .2s, background .2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
 }
 
 input.text-input {
@@ -1725,7 +2528,7 @@ input[type="date"].text-input {
 }
 
 .text-input:disabled {
-  opacity: .55;
+  opacity: 0.55;
   cursor: not-allowed;
   background: var(--cream);
 }
@@ -1733,7 +2536,7 @@ input[type="date"].text-input {
 .text-input.is-invalid,
 .dd-trigger.is-invalid {
   border-color: var(--logo-red);
-  box-shadow: 0 0 0 3px rgba(219, 42, 38, .12);
+  box-shadow: 0 0 0 3px rgba(219, 42, 38, 0.12);
 }
 
 .textarea-input {
@@ -1832,7 +2635,9 @@ input[type="date"].text-input {
 .dd-chevron {
   font-size: 14px;
   color: var(--muted);
-  transition: transform .22s ease, color .22s ease;
+  transition:
+    transform 0.22s ease,
+    color 0.22s ease;
 }
 
 .custom-dd.is-open .dd-chevron {
@@ -1856,8 +2661,8 @@ input[type="date"].text-input {
   border: 1.5px solid var(--line-strong);
   border-radius: 18px;
   background: var(--white);
-  box-shadow: 0 26px 52px -20px rgba(16, 32, 31, .32);
-  animation: ddFadeIn .16s cubic-bezier(.22, 1, .36, 1);
+  box-shadow: 0 26px 52px -20px rgba(16, 32, 31, 0.32);
+  animation: ddFadeIn 0.16s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dd-menu-body {
@@ -1898,7 +2703,7 @@ input[type="date"].text-input {
 }
 .dd-clear-btn:hover {
   color: var(--logo-red);
-  background: rgba(219, 42, 38, .06);
+  background: rgba(219, 42, 38, 0.06);
 }
 
 .dd-done-btn {
@@ -1940,7 +2745,9 @@ input[type="date"].text-input {
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: background .15s, color .15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 [dir="rtl"] .dd-option {
@@ -1952,13 +2759,13 @@ input[type="date"].text-input {
 }
 
 .dd-option.is-selected {
-  background: rgba(8, 47, 119, .08);
+  background: rgba(8, 47, 119, 0.08);
   color: var(--logo-blue);
   font-weight: 750;
 }
 
 .dd-option--red.is-selected {
-  background: rgba(219, 42, 38, .08);
+  background: rgba(219, 42, 38, 0.08);
   color: var(--logo-red);
 }
 
@@ -2021,7 +2828,10 @@ input[type="date"].text-input {
   font-weight: 900;
   color: transparent;
   flex-shrink: 0;
-  transition: background .15s, border-color .15s, color .15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .dd-option.is-selected .dd-check {
@@ -2050,14 +2860,14 @@ input[type="date"].text-input {
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(8, 47, 119, .09);
+  background: rgba(8, 47, 119, 0.09);
   color: var(--logo-blue);
   font-size: 12.5px;
   font-weight: 700;
 }
 
 .selected-tag--red {
-  background: rgba(219, 42, 38, .1);
+  background: rgba(219, 42, 38, 0.1);
   color: var(--logo-red);
 }
 
@@ -2070,7 +2880,7 @@ input[type="date"].text-input {
   line-height: 1;
   cursor: pointer;
   padding: 0 2px;
-  opacity: .75;
+  opacity: 0.75;
 }
 
 .selected-tag button:hover {
@@ -2129,12 +2939,15 @@ input[type="date"].text-input {
   border-radius: 18px;
   background: var(--white);
   cursor: pointer;
-  transition: border-color .2s, background .2s, box-shadow .2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .mode-card.is-active {
   border-color: var(--logo-blue);
-  background: rgba(8, 47, 119, .05);
+  background: rgba(8, 47, 119, 0.05);
   box-shadow: 0 16px 32px -22px var(--logo-blue-shadow);
 }
 
@@ -2153,7 +2966,7 @@ input[type="date"].text-input {
   color: var(--logo-blue);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: .06em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -2163,7 +2976,9 @@ input[type="date"].text-input {
   border: 2px solid var(--line-strong);
   border-radius: 50%;
   position: relative;
-  transition: border-color .2s, background .2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
 .mode-card.is-active .role-check {
@@ -2210,7 +3025,7 @@ input[type="date"].text-input {
 
 .consent-box.is-invalid {
   border-color: var(--logo-red);
-  background: rgba(219, 42, 38, .04);
+  background: rgba(219, 42, 38, 0.04);
 }
 
 .checkbox-row--consent {
@@ -2229,7 +3044,7 @@ input[type="date"].text-input {
   margin-top: 18px;
   padding: 14px 18px;
   border-radius: 14px;
-  background: rgba(219, 42, 38, .1);
+  background: rgba(219, 42, 38, 0.1);
   border: 1px solid var(--logo-red);
   color: var(--logo-red);
   font-size: 14px;
@@ -2325,7 +3140,7 @@ input[type="date"].text-input {
   display: block;
   font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-on-dark-muted);
 }
@@ -2450,7 +3265,7 @@ input[type="date"].text-input {
   margin-top: 8px;
   font-size: 13.5px;
   line-height: 1.55;
-  color: rgba(16, 32, 31, .86);
+  color: rgba(16, 32, 31, 0.86);
 }
 
 /* Confirmation / Success Card */
@@ -2459,7 +3274,7 @@ input[type="date"].text-input {
   border-radius: 28px;
   border: 1px solid var(--line);
   background: var(--paper);
-  box-shadow: 0 32px 64px -38px rgba(16, 32, 31, .28);
+  box-shadow: 0 32px 64px -38px rgba(16, 32, 31, 0.28);
 }
 
 .success-header {
@@ -2491,14 +3306,14 @@ input[type="date"].text-input {
   margin-top: 24px;
   padding: 14px 22px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--line-on-dark);
 }
 
 .ref-box span {
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-on-dark-muted);
 }
@@ -2506,7 +3321,7 @@ input[type="date"].text-input {
 .ref-box strong {
   font-family: var(--display);
   font-size: 24px;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
   color: var(--yellow);
 }
 
@@ -2537,7 +3352,7 @@ input[type="date"].text-input {
 .summary-grid dt {
   font-size: 11.5px;
   font-weight: 800;
-  letter-spacing: .1em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -2676,7 +3491,7 @@ input[type="date"].text-input {
     position: fixed;
     inset: 0;
     z-index: 140;
-    background: rgba(16, 32, 31, .48);
+    background: rgba(16, 32, 31, 0.48);
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
   }
@@ -2692,8 +3507,8 @@ input[type="date"].text-input {
     padding: 12px 16px max(18px, env(safe-area-inset-bottom));
     border-radius: 24px 24px 0 0;
     border: none;
-    box-shadow: 0 -20px 50px rgba(16, 32, 31, .35);
-    animation: sheetSlideUp .24s cubic-bezier(.22, 1, .36, 1);
+    box-shadow: 0 -20px 50px rgba(16, 32, 31, 0.35);
+    animation: sheetSlideUp 0.24s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   @keyframes sheetSlideUp {

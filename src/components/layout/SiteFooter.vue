@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from '@/router'
+import { useRouter, currentPath } from '@/router'
 import { useSiteStore } from '@/stores/siteStore'
 import BrandLogo from './BrandLogo.vue'
 
@@ -52,7 +52,7 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
 </script>
 
 <template>
-  <footer class="site-footer">
+  <footer class="site-footer" :class="{ 'site-footer--flush': currentPath === '/kontakt' }">
     <div class="shell">
       <div class="footer-top">
         <div class="footer-brand">
@@ -111,6 +111,10 @@ const displayLegalLinks = computed(() => props.legalLinks ?? footer.value.legalL
   padding: 66px 0 26px;
   color: var(--cream);
   background: var(--logo-blue);
+}
+
+.site-footer--flush {
+  margin-top: 0;
 }
 
 .footer-top {

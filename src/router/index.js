@@ -1,12 +1,13 @@
 import { ref, computed, defineComponent, h } from 'vue'
 import HomeView from '@/views/HomeView.vue'
 import CounselingView from '@/views/CounselingView.vue'
+import ContactView from '@/views/ContactView.vue'
 import ReportView from '@/views/ReportView.vue'
 
 const HASH_TO_PATH = {
   '#vorfall-melden': '/vorfall-melden',
   '#beratung': '/beratung',
-  '#kontakt': '/beratung',
+  '#kontakt': '/kontakt',
   '#projekte': '/projekte',
   '#ueber-uns': '/ueber-uns',
   '#aktuelles': '/aktuelles',
@@ -45,7 +46,7 @@ export function push(target) {
   if (raw.includes('#')) {
     const [p, hashPart] = raw.split('#')
     raw = p || '/'
-    if (hashPart === 'anfrage' || hashPart === 'faq') {
+    if (hashPart === 'anfrage' || hashPart === 'faq' || hashPart === 'nachricht') {
       scrollSelector = `#${hashPart}`
     } else if (HASH_TO_PATH[`#${hashPart}`]) {
       raw = HASH_TO_PATH[`#${hashPart}`]
@@ -96,7 +97,7 @@ if (typeof window !== 'undefined' && !window.__ADVSH_ROUTER_BOUND__) {
 
     e.preventDefault()
 
-    if (href === '#anfrage' || href === '#faq') {
+    if (href === '#anfrage' || href === '#faq' || href === '#nachricht') {
       const targetEl = document.querySelector(href)
       if (targetEl) {
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -133,8 +134,11 @@ export const RouterView = defineComponent({
       if (currentPath.value === '/vorfall-melden') {
         return h(ReportView)
       }
-      if (currentPath.value === '/beratung' || currentPath.value === '/kontakt') {
+      if (currentPath.value === '/beratung') {
         return h(CounselingView)
+      }
+      if (currentPath.value === '/kontakt') {
+        return h(ContactView)
       }
       return h(HomeView)
     }
